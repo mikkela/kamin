@@ -6,3 +6,5 @@ lazy val root = (project in file("."))
   .settings(
     name := "kamin"
   )
+libraryDependencies += "org.jline" % "jline" % "3.23.0"
+libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.19" % "test"
