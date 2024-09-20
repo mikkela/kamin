@@ -4,8 +4,6 @@ import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.prop.TableDrivenPropertyChecks
 
-import scala.collection.mutable.ListBuffer
-
 class LexerSpec extends AnyFunSpec
   with Matchers
   with TableDrivenPropertyChecks {
@@ -26,79 +24,45 @@ class LexerSpec extends AnyFunSpec
     ("while", Token.While),
     ("set", Token.Set),
     ("begin", Token.Begin),
-    ("abe", Token.Identifier("abe") ),
-    ("-345", Token.Integer("-345") ),
-    ("56", Token.Integer("56") )
+    ("abe", Token.Identifier("abe")),
+    ("-345", Token.Integer("-345")),
+    ("56", Token.Integer("56"))
   )
 
-  describe("nextToken method") {
+  describe("token method") {
     it("should lex a single token correctly") {
+      val lexer = Lexer()
       forAll(singleTokenTable) {
         (str, expectedToken) =>
-          Lexer(str).nextToken() shouldBe expectedToken
+          val it = lexer.tokens(str)
+          it.hasNext shouldBe true
+          it.next() shouldBe expectedToken
+          it.hasNext shouldBe false
       }
     }
 
     it("should lex a string with multple tokens correctly") {
-      val lexer = Lexer("( ) = + - * / < > define print if while set begin abe -345 56")
-      lexer.nextToken() shouldBe Token.LeftParenthesis
-      lexer.nextToken() shouldBe Token.RightParenthesis
-      lexer.nextToken() shouldBe Token.Equal
-      lexer.nextToken() shouldBe Token.Plus
-      lexer.nextToken() shouldBe Token.Minus
-      lexer.nextToken() shouldBe Token.Asteriks
-      lexer.nextToken() shouldBe Token.Slash
-      lexer.nextToken() shouldBe Token.LessThan
-      lexer.nextToken() shouldBe Token.GreaterThan
-      lexer.nextToken() shouldBe Token.Define
-      lexer.nextToken() shouldBe Token.Print
-      lexer.nextToken() shouldBe Token.If
-      lexer.nextToken() shouldBe Token.While
-      lexer.nextToken() shouldBe Token.Set
-      lexer.nextToken() shouldBe Token.Begin
-      lexer.nextToken() shouldBe Token.Identifier("abe")
-      lexer.nextToken() shouldBe Token.Integer("-345")
-      lexer.nextToken() shouldBe Token.Integer("56")
-      lexer.nextToken() shouldBe Token.EoF
-    }
-
-    it("should lex using left parenthesis as separator") {
-      val lexer = Lexer("++(")
-      lexer.nextToken() shouldBe Token.Identifier("++")
-      lexer.nextToken() shouldBe Token.LeftParenthesis
-      lexer.nextToken() shouldBe Token.EoF
-    }
-
-    it("should lex using right parenthesis as separator") {
-      val lexer = Lexer(")--")
-      lexer.nextToken() shouldBe Token.RightParenthesis
-      lexer.nextToken() shouldBe Token.Identifier("--")
-      lexer.nextToken() shouldBe Token.EoF
-    }
-
-    it("should lex using space as separator") {
-      val lexer = Lexer(" <> ")
-      lexer.nextToken() shouldBe Token.Identifier("<>")
-      lexer.nextToken() shouldBe Token.EoF
-    }
-
-    it("should lex not using any other as separator") {
-      val lexer = Lexer("!=")
-      lexer.nextToken() shouldBe Token.Identifier("!=")
-      lexer.nextToken() shouldBe Token.EoF
-    }
-
-    it("should lex ignoring comments") {
-      val lexer = Lexer("be#gin")
-      lexer.nextToken() shouldBe Token.Identifier("be")
-      lexer.nextToken() shouldBe Token.EoF
-    }
-
-    it("should lex ignoring comments until end of line") {
-      val lexer = Lexer("be#ignore\ngin")
-      lexer.nextToken() shouldBe Token.Identifier("be")
-      lexer.nextToken() shouldBe Token.Identifier("gin")
-      lexer.nextToken() shouldBe Token.EoF
+      val lexer = Lexer()
+      val it = lexer.tokens("( ) = + - * / < > define print if while set begin abe -345 56")
+      it.next() shouldBe Token.LeftParenthesis
+      it.next() shouldBe Token.RightParenthesis
+      it.next() shouldBe Token.Equal
+      it.next() shouldBe Token.Plus
+      it.next() shouldBe Token.Minus
+      it.next() shouldBe Token.Asteriks
+      it.next() shouldBe Token.Slash
+      it.next() shouldBe Token.LessThan
+      it.next() shouldBe Token.GreaterThan
+      it.next() shouldBe Token.Define
+      it.next() shouldBe Token.Print
+      it.next() shouldBe Token.If
+      it.next() shouldBe Token.While
+      it.next() shouldBe Token.Set
+      it.next() shouldBe Token.Begin
+      it.next() shouldBe Token.Identifier("abe")
+      it.next() shouldBe Token.Integer("-345")
+      it.next() shouldBe Token.Integer("56")
+      it.hasNext shouldBe false
     }
   }
 }

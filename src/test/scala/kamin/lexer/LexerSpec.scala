@@ -2,20 +2,187 @@ package kamin.lexer
 
 import org.scalatest.funspec.AnyFunSpec
 
-class LexerSpec extends AnyFunSpec{
+class LexerSpec extends AnyFunSpec {
+  enum Token(val text: String):
+    case LPAR extends Token("(")
+    case RPAR extends Token(")")
+    case NUMBER(n: String) extends Token(n)
+    case TEXT(t: String) extends Token(t)
 
-  describe("removeComments method") {
-    it("should return the same string when the string does not have a comment marker") {
-      assert(Lexer.removeComments("This has no comment marker") == "This has no comment marker")
+  describe("tokens method") {
+    it("should ignore whitespaces so '     ' should be empty") {
+      val lexer = Lexer[Token](
+        new Tokenizer[Token]:
+          override def to_token(s: String): Token = ???
+
+          override def left_parenthesis: Token = ???
+
+          override def right_parenthesis: Token = ???
+
+          override def number(s: String): Token = ???
+      )
+
+      val it = lexer.tokens("     ")
+      assert(!it.hasNext)
     }
-    it("should return a string where the rest of the string is removed from the comment marker") {
-      assert(Lexer.removeComments("This has a# comment marker") == "This has a\r\n")
+
+    it("should return left parenthesis when tokens is called with '('") {
+      val lexer = Lexer[Token](
+        new Tokenizer[Token]:
+          override def left_parenthesis: Token = Token.LPAR
+
+          override def right_parenthesis: Token = ???
+          override def number(s: String): Token = ???
+          override def to_token(s: String): Token = ???
+        )
+
+      val it = lexer.tokens("(")
+      assert(it.hasNext)
+      assert(it.next() == Token.LPAR)
+      assert(!it.hasNext)
     }
-    it("should return a string where the part string until carriage return and rewline is removed from the comment marker") {
-      assert(Lexer.removeComments("This has a# comment marker \r\n that will be removed") == "This has a\r\n that will be removed")
+
+    it("should return right parenthesis when tokens is called with ')'") {
+      val lexer = Lexer[Token](
+        new Tokenizer[Token]:
+          override def right_parenthesis: Token = Token.RPAR
+
+          override def left_parenthesis: Token = ???
+          override def number(s: String): Token = ???
+          override def to_token(s: String): Token = ???
+      )
+
+      val it = lexer.tokens(")")
+      assert(it.hasNext)
+      assert(it.next() == Token.RPAR)
+      assert(!it.hasNext)
     }
-    it("should return a string where the part string until rewline is removed from the comment marker") {
-      assert(Lexer.removeComments("This has a# comment marker \n that is ended by newline") == "This has a\r\n that is ended by newline")
+
+    it("should return number when tokens is called with 9999") {
+      val lexer = Lexer[Token](
+        new Tokenizer[Token]:
+          override def number(s: String): Token = Token.NUMBER(s)
+
+          override def left_parenthesis: Token = ???
+          override def right_parenthesis: Token = ???
+          override def to_token(s: String): Token = ???
+      )
+
+      val it = lexer.tokens("9999")
+      assert(it.hasNext)
+      assert(it.next() == Token.NUMBER("9999"))
+      assert(!it.hasNext)
+    }
+
+    it("should return number when tokens is called with -6432") {
+      val lexer = Lexer[Token](
+        new Tokenizer[Token]:
+          override def number(s: String): Token = Token.NUMBER(s)
+
+          override def left_parenthesis: Token = ???
+
+          override def right_parenthesis: Token = ???
+
+          override def to_token(s: String): Token = ???
+      )
+
+      val it = lexer.tokens("-6432")
+      assert(it.hasNext)
+      assert(it.next() == Token.NUMBER("-6432"))
+      assert(!it.hasNext)
+    }
+
+    it("should return text when tokens is called with '-ttffde'") {
+      val lexer = Lexer[Token](
+        new Tokenizer[Token]:
+          override def to_token(s: String): Token = Token.TEXT(s)
+
+          override def left_parenthesis: Token = ???
+
+          override def right_parenthesis: Token = ???
+
+          override def number(s: String): Token = ???
+      )
+
+      val it = lexer.tokens("-ttffde")
+      assert(it.hasNext)
+      assert(it.next() == Token.TEXT("-ttffde"))
+      assert(!it.hasNext)
+    }
+
+    it("should return several tokens when each part is separated '(+(* 455 -556) x)'") {
+      val lexer = Lexer[Token](
+        new Tokenizer[Token]:
+          override def to_token(s: String): Token = Token.TEXT(s)
+
+          override def left_parenthesis: Token = Token.LPAR
+
+          override def right_parenthesis: Token = Token.RPAR
+
+          override def number(s: String): Token = Token.NUMBER(s)
+      )
+
+      val it = lexer.tokens("(+( ** 455 -556) x)")
+      assert(it.hasNext)
+      assert(it.next() == Token.LPAR)
+
+      assert(it.hasNext)
+      assert(it.next() == Token.TEXT("+"))
+
+      assert(it.hasNext)
+      assert(it.next() == Token.LPAR)
+
+      assert(it.hasNext)
+      assert(it.next() == Token.TEXT("**"))
+
+      assert(it.hasNext)
+      assert(it.next() == Token.NUMBER("455"))
+
+      assert(it.hasNext)
+      assert(it.next() == Token.NUMBER("-556"))
+
+      assert(it.hasNext)
+      assert(it.next() == Token.RPAR)
+
+      assert(it.hasNext)
+      assert(it.next() == Token.TEXT("x"))
+
+      assert(it.hasNext)
+      assert(it.next() == Token.RPAR)
+
+      assert(!it.hasNext)
+    }
+
+    it("should ignore comments until the end of line '#this is a comment' should be empty") {
+      val lexer = Lexer[Token](
+        new Tokenizer[Token]:
+          override def to_token(s: String): Token = ???
+
+          override def left_parenthesis: Token = ???
+
+          override def right_parenthesis: Token = ???
+
+          override def number(s: String): Token = ???
+      )
+
+      val it = lexer.tokens("#this is a comment")
+      assert(!it.hasNext)
+    }
+    
+    it("should ignore comments so '#this is a comment\nx' should be the text x") {
+      val lexer = Lexer[Token](
+        new Tokenizer[Token]:
+          override def to_token(s: String): Token = Token.TEXT(s)
+          override def left_parenthesis: Token = ???
+          override def right_parenthesis: Token = ???
+          override def number(s: String): Token = ???
+      )
+
+      val it = lexer.tokens("#this is a comment\nx")
+      assert(it.hasNext)
+      assert(it.next() == Token.TEXT("x"))
+
+      assert(!it.hasNext)
     }
   }
 }

@@ -1,101 +1,67 @@
 package kamin.lexer
 
-import kamin.lexer.Lexer.{isDelimiter, isNumberStart, isSpace}
+trait Tokenizer[Token]:
+  def left_parenthesis:Token
+  def right_parenthesis: Token
+  def number(s: String): Token
+  def to_token(s: String): Token
 
-abstract class Lexer[Token](val input: String):
-  private var position: Int = 0
-  private var readPosition: Int = 0
-  private var character: Char = EndOfInput
-  private val inputWithoutComments = Lexer.removeComments(input)
+class Lexer[Token](val tokenizer: Tokenizer[Token]):
+  def tokens(input: String):Iterator[Token] =
+    var position = 0
 
-  readCharacter()
+    def currentChar: Char =
+      if position < input.length then input(position) else '\u0000'
 
-  def nextToken() : Token =
-    skipWhiteSpaces()
+    def nextChar: Char =
+      if position + 1 < input.length then input(position + 1) else '\u0000'
 
-    character match
-      case '(' =>
-        val token = leftParenthesis()
-        readCharacter()
-        token
-      case ')' =>
-        val token = rightParenthesis()
-        readCharacter()
-        token
-      case EndOfInput =>
-        eof()
-      case _ =>
-        if isNumberStart(character, peekCharacter()) then
-          integer(readNumber())
-        else
-          if !isDelimiter(character) then
-            lookup(readIdentifier())
-          else
-            illegal()
+    def isSeparator(c: Char): Boolean =
+      c == '\u0000' || c.isWhitespace || c == '(' || c == ')'
 
-  private def readCharacter(): Unit =
-    character = peekCharacter()
-    position = readPosition
-    readPosition = readPosition + 1
+    def advance(): Unit = position += 1
 
-  private def readCharacters(clause: Char => Boolean): Unit =
-    while clause(character) do
-      readCharacter()
+    def isEndOfLine() : Boolean =
+      position >= input.length
 
-  private def readString(filter: () => Unit): String =
-    val p = position
-    filter.apply()
-    inputWithoutComments.substring(p, position)
+    def skipComments(): Unit =
+      if currentChar == '#' then
+        while !isEndOfLine() && currentChar != '\n' && currentChar != '\r' do advance()
+        skipWhitespaces()
 
-  private def readNumber() : String =
-    readString(
-      () =>
-        if (isNumberStart(character, peekCharacter()))
-          readCharacter()
-          readCharacters(Lexer.isDigit)
-    )
+    def skipWhitespaces(): Unit =
+      while currentChar.isWhitespace do advance()
 
-  private def readIdentifier() : String =
-    readString(
-      () => readCharacters(c => !isDelimiter(c))
-    )
+    def lexNumber(): Token =
+      val start = position
+      if currentChar == '-' then advance()
+      while currentChar.isDigit do advance()
+      val number = input.substring(start, position)
+      tokenizer.number(number)
 
-  private def skipWhiteSpaces(): Unit =
-    readCharacters(isSpace)
+    def lexToken(): Token =
+      val start = position
+      while !isSeparator(currentChar) do advance()
+      val text = input.substring(start, position)
+      tokenizer.to_token(text)
 
-  private def peekCharacter(): Char =
-    if readPosition >= inputWithoutComments.length() then EndOfInput else inputWithoutComments.charAt(readPosition)
+    new Iterator[Token]:
+      override def hasNext: Boolean =
+        skipWhitespaces()
+        skipComments()
+        !isEndOfLine()
 
-  protected def leftParenthesis() : Token
-  protected def rightParenthesis() : Token
-  protected def eof() : Token
-  protected def integer(value: String): Token
-  protected def lookup(value: String): Token
-  protected def illegal(): Token
+      override def next(): Token =
+        skipWhitespaces()
+        skipComments()
 
-object Lexer:
-  private val commentExpression = "#.*?(\r?\n|$)".r
-  def removeComments(input: String): String =
-    commentExpression.replaceAllIn(input, "\r\n")
-
-  private def isNumberStart(current: Char, next: Char) : Boolean =
-    isDigit(current) || (current == '-' && isDigit(next))
-
-  private def isDigit(current: Char): Boolean =
-    Character.isDigit(current)
-
-  private def isSpace(current: Char): Boolean =
-    current == ' ' || current == '\t' || current == '\n' || current == '\r'
-
-  private def isBlockStart(current: Char) : Boolean =
-    current == '('
-
-  private def isBlockEnd(current: Char): Boolean =
-    current == ')'
-
-  private def isEndOfInput(current: Char) : Boolean =
-    current == EndOfInput
-
-  private def isDelimiter(current: Char) : Boolean =
-    isSpace(current) || isBlockStart(current) || isBlockEnd(current) || isEndOfInput(current)
-private val EndOfInput: Char = 0
+        currentChar match
+          case c if c == '-' && nextChar.isDigit => lexNumber()
+          case c if c.isDigit => lexNumber()
+          case '(' =>
+            advance()
+            tokenizer.left_parenthesis
+          case ')' =>
+            advance()
+            tokenizer.right_parenthesis
+          case _ => lexToken()
