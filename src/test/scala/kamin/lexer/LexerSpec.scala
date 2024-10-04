@@ -3,184 +3,138 @@ package kamin.lexer
 import org.scalatest.funspec.AnyFunSpec
 
 class LexerSpec extends AnyFunSpec {
-  enum Token(val text: String):
-    case LPAR extends Token("(")
-    case RPAR extends Token(")")
-    case NUMBER(n: String) extends Token(n)
-    case TEXT(t: String) extends Token(t)
+  enum TokenType:
+    case TEXT
 
   describe("tokens method") {
     it("should ignore whitespaces so '     ' should be empty") {
-      val lexer = Lexer[Token](
-        new Tokenizer[Token]:
-          override def to_token(s: String): Token = ???
-
-          override def left_parenthesis: Token = ???
-
-          override def right_parenthesis: Token = ???
-
-          override def number(s: String): Token = ???
+      val lexer = Lexer[TokenType](using
+        (s: String) => ???
       )
 
       val it = lexer.tokens("     ")
       assert(!it.hasNext)
     }
 
-    it("should return left parenthesis when tokens is called with '('") {
-      val lexer = Lexer[Token](
-        new Tokenizer[Token]:
-          override def left_parenthesis: Token = Token.LPAR
+    it("should treat single parts of text as a token") {
+      val lexer = Lexer[TokenType](using 
+        (s: String) => Token(TokenType.TEXT, s)
+      )
 
-          override def right_parenthesis: Token = ???
-          override def number(s: String): Token = ???
-          override def to_token(s: String): Token = ???
-        )
-
-      val it = lexer.tokens("(")
+      val it = lexer.tokens("token")
       assert(it.hasNext)
-      assert(it.next() == Token.LPAR)
+      assert(it.next().literal == "token")
       assert(!it.hasNext)
     }
 
-    it("should return right parenthesis when tokens is called with ')'") {
-      val lexer = Lexer[Token](
-        new Tokenizer[Token]:
-          override def right_parenthesis: Token = Token.RPAR
-
-          override def left_parenthesis: Token = ???
-          override def number(s: String): Token = ???
-          override def to_token(s: String): Token = ???
+    it("should treat left parenthesis as a separator between tokens") {
+      val lexer = Lexer[TokenType](using 
+        (s: String) => Token(TokenType.TEXT, s)
       )
 
-      val it = lexer.tokens(")")
+      val it = lexer.tokens("token1(token2")
       assert(it.hasNext)
-      assert(it.next() == Token.RPAR)
+      assert(it.next().literal == "token1")
+
+      assert(it.hasNext)
+      assert(it.next().literal == "(")
+
+      assert(it.hasNext)
+      assert(it.next().literal == "token2")
       assert(!it.hasNext)
     }
 
-    it("should return number when tokens is called with 9999") {
-      val lexer = Lexer[Token](
-        new Tokenizer[Token]:
-          override def number(s: String): Token = Token.NUMBER(s)
-
-          override def left_parenthesis: Token = ???
-          override def right_parenthesis: Token = ???
-          override def to_token(s: String): Token = ???
+    it("should treat right parenthesis as a separator between tokens") {
+      val lexer = Lexer[TokenType](using 
+        (s: String) => Token(TokenType.TEXT, s)
       )
 
-      val it = lexer.tokens("9999")
+      val it = lexer.tokens("token3)token4")
       assert(it.hasNext)
-      assert(it.next() == Token.NUMBER("9999"))
+      assert(it.next().literal == "token3")
+
+      assert(it.hasNext)
+      assert(it.next().literal == ")")
+
+      assert(it.hasNext)
+      assert(it.next().literal == "token4")
       assert(!it.hasNext)
     }
 
-    it("should return number when tokens is called with -6432") {
-      val lexer = Lexer[Token](
-        new Tokenizer[Token]:
-          override def number(s: String): Token = Token.NUMBER(s)
-
-          override def left_parenthesis: Token = ???
-
-          override def right_parenthesis: Token = ???
-
-          override def to_token(s: String): Token = ???
+    it("should treat space as a separator between tokens") {
+      val lexer = Lexer[TokenType](using 
+        (s: String) => Token(TokenType.TEXT, s)
       )
 
-      val it = lexer.tokens("-6432")
+      val it = lexer.tokens("token5 token6")
       assert(it.hasNext)
-      assert(it.next() == Token.NUMBER("-6432"))
+      assert(it.next().literal == "token5")
+
+      assert(it.hasNext)
+      assert(it.next().literal == "token6")
       assert(!it.hasNext)
     }
 
-    it("should return text when tokens is called with '-ttffde'") {
-      val lexer = Lexer[Token](
-        new Tokenizer[Token]:
-          override def to_token(s: String): Token = Token.TEXT(s)
-
-          override def left_parenthesis: Token = ???
-
-          override def right_parenthesis: Token = ???
-
-          override def number(s: String): Token = ???
+    it("should treat tab as a separator between tokens") {
+      val lexer = Lexer[TokenType](using 
+        (s: String) => Token(TokenType.TEXT, s)
       )
 
-      val it = lexer.tokens("-ttffde")
+      val it = lexer.tokens("443\t-5676")
       assert(it.hasNext)
-      assert(it.next() == Token.TEXT("-ttffde"))
+      assert(it.next().literal == "443")
+
+      assert(it.hasNext)
+      assert(it.next().literal == "-5676")
       assert(!it.hasNext)
     }
 
-    it("should return several tokens when each part is separated '(+(* 455 -556) x)'") {
-      val lexer = Lexer[Token](
-        new Tokenizer[Token]:
-          override def to_token(s: String): Token = Token.TEXT(s)
-
-          override def left_parenthesis: Token = Token.LPAR
-
-          override def right_parenthesis: Token = Token.RPAR
-
-          override def number(s: String): Token = Token.NUMBER(s)
+    it("should treat return as a separator between tokens") {
+      val lexer = Lexer[TokenType](using 
+        (s: String) => Token(TokenType.TEXT, s)
       )
 
-      val it = lexer.tokens("(+( ** 455 -556) x)")
+      val it = lexer.tokens("token9\rtoken0")
       assert(it.hasNext)
-      assert(it.next() == Token.LPAR)
+      assert(it.next().literal == "token9")
 
       assert(it.hasNext)
-      assert(it.next() == Token.TEXT("+"))
+      assert(it.next().literal == "token0")
+      assert(!it.hasNext)
+    }
+
+    it("should treat newline as a separator between tokens") {
+      val lexer = Lexer[TokenType](using 
+        (s: String) => Token(TokenType.TEXT, s)
+      )
+
+      val it = lexer.tokens("TokenA\nTokenB")
+      assert(it.hasNext)
+      assert(it.next().literal == "TokenA")
 
       assert(it.hasNext)
-      assert(it.next() == Token.LPAR)
-
-      assert(it.hasNext)
-      assert(it.next() == Token.TEXT("**"))
-
-      assert(it.hasNext)
-      assert(it.next() == Token.NUMBER("455"))
-
-      assert(it.hasNext)
-      assert(it.next() == Token.NUMBER("-556"))
-
-      assert(it.hasNext)
-      assert(it.next() == Token.RPAR)
-
-      assert(it.hasNext)
-      assert(it.next() == Token.TEXT("x"))
-
-      assert(it.hasNext)
-      assert(it.next() == Token.RPAR)
-
+      assert(it.next().literal == "TokenB")
       assert(!it.hasNext)
     }
 
     it("should ignore comments until the end of line '#this is a comment' should be empty") {
-      val lexer = Lexer[Token](
-        new Tokenizer[Token]:
-          override def to_token(s: String): Token = ???
-
-          override def left_parenthesis: Token = ???
-
-          override def right_parenthesis: Token = ???
-
-          override def number(s: String): Token = ???
+      val lexer = Lexer[TokenType](using 
+        new Tokenizer[TokenType]:
+          override def toToken(s: String): Token[TokenType] = ???
       )
 
       val it = lexer.tokens("#this is a comment")
       assert(!it.hasNext)
     }
-    
+
     it("should ignore comments so '#this is a comment\nx' should be the text x") {
-      val lexer = Lexer[Token](
-        new Tokenizer[Token]:
-          override def to_token(s: String): Token = Token.TEXT(s)
-          override def left_parenthesis: Token = ???
-          override def right_parenthesis: Token = ???
-          override def number(s: String): Token = ???
+      val lexer = Lexer[TokenType](using 
+        (s: String) => Token(TokenType.TEXT, s)
       )
 
       val it = lexer.tokens("#this is a comment\nx")
       assert(it.hasNext)
-      assert(it.next() == Token.TEXT("x"))
+      assert(it.next().literal == "x")
 
       assert(!it.hasNext)
     }

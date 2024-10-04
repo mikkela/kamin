@@ -1,13 +1,12 @@
 package kamin.lexer
 
-trait Tokenizer[Token]:
-  def left_parenthesis:Token
-  def right_parenthesis: Token
-  def number(s: String): Token
-  def to_token(s: String): Token
+case class Token[TokenType](tokenType: TokenType, literal: String)
 
-class Lexer[Token](val tokenizer: Tokenizer[Token]):
-  def tokens(input: String):Iterator[Token] =
+trait Tokenizer[TokenType]:
+  def toToken(s: String): Token[TokenType]
+
+class Lexer[TokenType](using tokenizer: Tokenizer[TokenType]):
+  def tokens(input: String):Iterator[Token[TokenType]] =
     var position = 0
 
     def currentChar: Char =
@@ -32,36 +31,27 @@ class Lexer[Token](val tokenizer: Tokenizer[Token]):
     def skipWhitespaces(): Unit =
       while currentChar.isWhitespace do advance()
 
-    def lexNumber(): Token =
-      val start = position
-      if currentChar == '-' then advance()
-      while currentChar.isDigit do advance()
-      val number = input.substring(start, position)
-      tokenizer.number(number)
-
-    def lexToken(): Token =
+    def lexToken(): Token[TokenType] =
       val start = position
       while !isSeparator(currentChar) do advance()
       val text = input.substring(start, position)
-      tokenizer.to_token(text)
+      tokenizer.toToken(text)
 
-    new Iterator[Token]:
+    new Iterator[Token[TokenType]]:
       override def hasNext: Boolean =
         skipWhitespaces()
         skipComments()
         !isEndOfLine()
 
-      override def next(): Token =
+      override def next(): Token[TokenType] =
         skipWhitespaces()
         skipComments()
 
         currentChar match
-          case c if c == '-' && nextChar.isDigit => lexNumber()
-          case c if c.isDigit => lexNumber()
           case '(' =>
             advance()
-            tokenizer.left_parenthesis
+            tokenizer.toToken("(")
           case ')' =>
             advance()
-            tokenizer.right_parenthesis
+            tokenizer.toToken(")")
           case _ => lexToken()
