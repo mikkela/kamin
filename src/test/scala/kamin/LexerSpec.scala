@@ -118,22 +118,22 @@ class LexerSpec extends AnyFunSpec {
       assert(!it.hasNext)
     }
 
-    it("should ignore comments until the end of line '#this is a comment' should be empty") {
+    it("should ignore comments until the end of line ';this is a comment' should be empty") {
       val lexer = Lexer[TokenType](using 
         new Tokenizer[TokenType]:
           override def toToken(s: String): Token[TokenType] = ???
       )
 
-      val it = lexer.tokens("#this is a comment")
+      val it = lexer.tokens(";this is a comment")
       assert(!it.hasNext)
     }
 
-    it("should ignore comments so '#this is a comment\nx' should be the text x") {
+    it("should ignore comments so ';this is a comment\nx' should be the text x") {
       val lexer = Lexer[TokenType](using 
         (s: String) => Token(TokenType.TEXT, s)
       )
 
-      val it = lexer.tokens("#this is a comment\nx")
+      val it = lexer.tokens(";this is a comment\nx")
       assert(it.hasNext)
       assert(it.next().literal == "x")
 

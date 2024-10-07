@@ -1,10 +1,10 @@
 package kamin
 
 enum BasicTokenType:
-  case Illegal, Identifier, Integer, LeftParenthesis, RightParenthesis, Equal, LessThan, GreaterThan, Plus, Minus, Asteriks, Slash, Define, Print, If, While, Set, Begin
+  case Illegal, Name, Integer, LeftParenthesis, RightParenthesis, Equal, LessThan, GreaterThan, Plus, Minus, Asteriks, Slash, Define, Print, If, While, Set, Begin
 
 object BasicTokenizer extends Tokenizer[BasicTokenType]
-with IntegerTokenizer with IdentifierTokenizer:
+with IntegerTokenizer with NameTokenizer:
   def toToken(s: String): Token[BasicTokenType] =
     s match
       case "(" => Token(BasicTokenType.LeftParenthesis, "(")
@@ -23,6 +23,6 @@ with IntegerTokenizer with IdentifierTokenizer:
       case "set" => Token(BasicTokenType.Set, s.toUpperCase)
       case "begin" => Token(BasicTokenType.Begin, s.toUpperCase)
       case _ if isInteger(s) => Token(BasicTokenType.Integer, s) // If all characters are digits, it's a number
-      case _ if isIdentifier(s) => Token(BasicTokenType.Identifier, s) // If all characters are letters, it's an identifier
+      case _ if isName(s) => Token(BasicTokenType.Name, s) // If all characters are letters, it's an identifier
       case _ => Token(BasicTokenType.Illegal, s) // Anything else is considered illegal
 

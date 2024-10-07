@@ -26,7 +26,7 @@ class BasicTokenTypeSpec extends AnyFunSpec
     ("while", Token(BasicTokenType.While, "WHILE")),
     ("set", Token(BasicTokenType.Set, "SET")),
     ("begin", Token(BasicTokenType.Begin, "BEGIN")),
-    ("abe", Token(BasicTokenType.Identifier, "abe")),
+    ("abe", Token(BasicTokenType.Name, "abe")),
     ("-345", Token(BasicTokenType.Integer, "-345")),
     ("56", Token(BasicTokenType.Integer, "56"))
   )

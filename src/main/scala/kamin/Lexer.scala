@@ -24,7 +24,7 @@ class Lexer[TokenType](using tokenizer: Tokenizer[TokenType]):
       position >= input.length
 
     def skipComments(): Unit =
-      if currentChar == '#' then
+      if currentChar == ';' then
         while !isEndOfLine() && currentChar != '\n' && currentChar != '\r' do advance()
         skipWhitespaces()
 
