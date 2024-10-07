@@ -1,5 +1,6 @@
-package kamin.lexer
+package kamin
 
+import kamin.{Lexer, Token, Tokenizer}
 import org.scalatest.funspec.AnyFunSpec
 
 class LexerSpec extends AnyFunSpec {

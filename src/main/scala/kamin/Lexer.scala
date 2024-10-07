@@ -1,4 +1,4 @@
-package kamin.lexer
+package kamin
 
 case class Token[TokenType](tokenType: TokenType, literal: String)
 

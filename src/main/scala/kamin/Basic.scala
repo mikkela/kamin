@@ -1,4 +1,4 @@
-package kamin.lexer
+package kamin
 
 enum BasicTokenType:
   case Illegal, Identifier, Integer, LeftParenthesis, RightParenthesis, Equal, LessThan, GreaterThan, Plus, Minus, Asteriks, Slash, Define, Print, If, While, Set, Begin

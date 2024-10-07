@@ -1,4 +1,4 @@
-package kamin.lexer
+package kamin
 
 trait IdentifierTokenizer {
   def isIdentifier(s: String) : Boolean = s.forall(c => c.isLetter || isAllowedSpecialChar(c))

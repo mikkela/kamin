@@ -1,5 +1,6 @@
-package kamin.lexer
+package kamin
 
+import kamin.{BasicTokenType, BasicTokenizer, Token}
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.prop.TableDrivenPropertyChecks
