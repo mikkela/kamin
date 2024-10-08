@@ -1,6 +1,6 @@
 package kamin
 
-import kamin.{BasicTokenType, BasicTokenizer, Token}
+import kamin.{TokenType, BasicTokenizer, Token}
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.prop.TableDrivenPropertyChecks
@@ -11,24 +11,24 @@ class BasicTokenTypeSpec extends AnyFunSpec
 
   private val singleTokenTable = Table(
     ("Text", "Is Token"),
-    ("(", Token(BasicTokenType.LeftParenthesis, "(")),
-    (")", Token(BasicTokenType.RightParenthesis, ")")),
-    ("=", Token(BasicTokenType.Equal, "=")),
-    ("+", Token(BasicTokenType.Plus, "+")),
-    ("-", Token(BasicTokenType.Minus, "-")),
-    ("*", Token(BasicTokenType.Asteriks, "*")),
-    ("/", Token(BasicTokenType.Slash, "/")),
-    ("<", Token(BasicTokenType.LessThan, "<")),
-    (">", Token(BasicTokenType.GreaterThan, ">")),
-    ("define", Token(BasicTokenType.Define, "DEFINE")),
-    ("print", Token(BasicTokenType.Print, "PRINT")),
-    ("if", Token(BasicTokenType.If, "IF")),
-    ("while", Token(BasicTokenType.While, "WHILE")),
-    ("set", Token(BasicTokenType.Set, "SET")),
-    ("begin", Token(BasicTokenType.Begin, "BEGIN")),
-    ("abe", Token(BasicTokenType.Name, "abe")),
-    ("-345", Token(BasicTokenType.Integer, "-345")),
-    ("56", Token(BasicTokenType.Integer, "56"))
+    ("(", Token(TokenType.LeftParenthesis, "(")),
+    (")", Token(TokenType.RightParenthesis, ")")),
+    ("=", Token(TokenType.Equal, "=")),
+    ("+", Token(TokenType.Plus, "+")),
+    ("-", Token(TokenType.Minus, "-")),
+    ("*", Token(TokenType.Asteriks, "*")),
+    ("/", Token(TokenType.Slash, "/")),
+    ("<", Token(TokenType.LessThan, "<")),
+    (">", Token(TokenType.GreaterThan, ">")),
+    ("define", Token(TokenType.Define, "DEFINE")),
+    ("print", Token(TokenType.Print, "PRINT")),
+    ("if", Token(TokenType.If, "IF")),
+    ("while", Token(TokenType.While, "WHILE")),
+    ("set", Token(TokenType.Set, "SET")),
+    ("begin", Token(TokenType.Begin, "BEGIN")),
+    ("abe", Token(TokenType.Name, "abe")),
+    ("-345", Token(TokenType.Integer, "-345")),
+    ("56", Token(TokenType.Integer, "56"))
   )
 
   describe("toToken method") {

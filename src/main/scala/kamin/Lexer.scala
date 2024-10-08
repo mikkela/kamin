@@ -1,12 +1,16 @@
 package kamin
 
-case class Token[TokenType](tokenType: TokenType, literal: String)
+enum TokenType:
+  case Illegal, Name, Integer, LeftParenthesis, RightParenthesis, Equal, LessThan, GreaterThan, Plus, Minus, Asteriks, Slash, Define, Print, If, While, Set, Begin
 
-trait Tokenizer[TokenType]:
-  def toToken(s: String): Token[TokenType]
 
-class Lexer[TokenType](using tokenizer: Tokenizer[TokenType]):
-  def tokens(input: String):Iterator[Token[TokenType]] =
+case class Token(tokenType: TokenType, literal: String)
+
+trait Tokenizer:
+  def toToken(s: String): Token
+
+class Lexer[TokenType](using tokenizer: Tokenizer):
+  def tokens(input: String):Iterator[Token] =
     var position = 0
 
     def currentChar: Char =
@@ -31,19 +35,19 @@ class Lexer[TokenType](using tokenizer: Tokenizer[TokenType]):
     def skipWhitespaces(): Unit =
       while currentChar.isWhitespace do advance()
 
-    def lexToken(): Token[TokenType] =
+    def lexToken(): Token =
       val start = position
       while !isSeparator(currentChar) do advance()
       val text = input.substring(start, position)
       tokenizer.toToken(text)
 
-    new Iterator[Token[TokenType]]:
+    new Iterator[Token]:
       override def hasNext: Boolean =
         skipWhitespaces()
         skipComments()
         !isEndOfLine()
 
-      override def next(): Token[TokenType] =
+      override def next(): Token =
         skipWhitespaces()
         skipComments()
 
