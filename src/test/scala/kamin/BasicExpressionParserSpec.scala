@@ -29,7 +29,7 @@ class BasicExpressionParserSpec extends AnyFunSpec with Matchers{
         )))
     }
 
-    it("should return an erro when parsing an invalid if expression") {
+    it("should return an error when parsing an invalid if expression") {
       val result = parser.parseExpression(PeekingIterator[Token](lexer.tokens("(if foo 123)")))
 
       result shouldBe Left(") is an unexpected token")
@@ -39,6 +39,28 @@ class BasicExpressionParserSpec extends AnyFunSpec with Matchers{
       val result = parser.parseExpression(PeekingIterator[Token](lexer.tokens("(if foo 123")))
 
       result shouldBe Left("Expected alternative expression")
+    }
+
+    it("should return an while node when parsing a valid while expression") {
+      val result = parser.parseExpression(PeekingIterator[Token](lexer.tokens("(while foo -123)")))
+
+      result shouldBe Right(Some(
+        ASTWhileExpressionNode(
+          ASTVariableExpressionNode(ASTVariableNode("foo")),
+          ASTValueExpressionNode(ASTValueNode(-123))
+        )))
+    }
+
+    it("should return an error when parsing an invalid while expression") {
+      val result = parser.parseExpression(PeekingIterator[Token](lexer.tokens("(while foo )")))
+
+      result shouldBe Left(") is an unexpected token")
+    }
+
+    it("should return an error when parsing an incomplete while expression") {
+      val result = parser.parseExpression(PeekingIterator[Token](lexer.tokens("(while foo")))
+
+      result shouldBe Left("Expected body expression")
     }
   }
 }

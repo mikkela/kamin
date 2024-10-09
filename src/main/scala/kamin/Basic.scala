@@ -1,6 +1,6 @@
 package kamin
 
-import kamin.TokenType.{Define, If, LeftParenthesis, Name, RightParenthesis}
+import kamin.TokenType.{Define, If, LeftParenthesis, Name, RightParenthesis, While}
 
 object BasicTokenizer extends Tokenizer
 with IntegerTokenizer with NameTokenizer:
@@ -79,6 +79,7 @@ class BasicExpressionParser extends
             if tokens.length == 2 then
               tokens(1).tokenType match
                 case If => IfExpressionParser(using this).parseExpression(peekingIterator)
+                case While => WhileExpressionParser(using this).parseExpression(peekingIterator)
                 case _ => invalidToken(tokens(1).literal)
             else
               Right(None)

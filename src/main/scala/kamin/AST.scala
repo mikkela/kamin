@@ -28,21 +28,21 @@ case class ASTIfExpressionNode( testExpression: ExpressionNode,
 
 sealed trait WhileExpressionNode extends ExpressionNode
 
-case class ASTWhileExpression(testExpression: ExpressionNode,
+case class ASTWhileExpressionNode(testExpression: ExpressionNode,
                               bodyExpression: ExpressionNode) extends WhileExpressionNode
 
 sealed trait SetExpressionNode extends ExpressionNode
 
-case class ASTSetExpression(variable: VariableNode,
+case class ASTSetExpressionNode(variable: VariableNode,
                             valueExpression: ValueExpressionNode) extends SetExpressionNode
 
 sealed trait BeginExpressionNode extends ExpressionNode
 
-case class ASTBeginExpression(expressions: Seq[ExpressionNode]) extends BeginExpressionNode
+case class ASTBeginExpressionNode(expressions: Seq[ExpressionNode]) extends BeginExpressionNode
 
 sealed trait OptrExpressionNode extends ExpressionNode
 
-case class ASTOptrExpression(optr: OptrNode, expressions: Seq[ExpressionNode]) extends OptrExpressionNode
+case class ASTOptrExpressionNode(optr: OptrNode, expressions: Seq[ExpressionNode]) extends OptrExpressionNode
 
 trait OptrNode extends Node
 
