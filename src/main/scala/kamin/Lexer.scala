@@ -6,10 +6,21 @@ enum TokenType:
 
 case class Token(tokenType: TokenType, literal: String)
 
+trait IntegerTokenizer {
+  def isInteger(s: String): Boolean = s.head == '-' && s.tail.forall(_.isDigit) || s.forall(_.isDigit)
+}
+
+trait NameTokenizer {
+  def isName(s: String): Boolean = s.forall(c => c.isLetter || isAllowedSpecialChar(c))
+
+  private def isAllowedSpecialChar(c: Char): Boolean =
+    !Set(';', '(', ')').contains(c) && !c.isWhitespace
+}
+
 trait Tokenizer:
   def toToken(s: String): Token
 
-class Lexer[TokenType](using tokenizer: Tokenizer):
+class Lexer(using tokenizer: Tokenizer):
   def tokens(input: String):Iterator[Token] =
     var position = 0
 
