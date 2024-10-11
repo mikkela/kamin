@@ -1,5 +1,7 @@
 package kamin
 
+import scala.collection.mutable
+
 class PeekingIterator[A](iter: Iterator[A]) extends Iterator[A]:
   private var buffer: List[A] = List.empty
 
@@ -25,4 +27,19 @@ class PeekingIterator[A](iter: Iterator[A]) extends Iterator[A]:
     else 
       iter.next()
 
- 
+class MultiKeyContainer[A, Value]:
+  private val container = mutable.Map[Seq[A], Value]()
+
+  // Insert a value with a tuple key (can be of varying length)
+  def put(key: A*)(value: Value): Unit =
+    container.put(key.toSeq, value)
+
+  // Lookup a value with a tuple key (can be of varying length)
+  def get(key: A*): Option[Value] =
+    container.get(key.toSeq)
+
+  // Get all values associated with keys that start with the given prefix
+  def getAllWithPrefix(prefix: A*): Seq[Value] =
+    container.collect {
+      case (k, v) if k.startsWith(prefix.toSeq) => v
+    }.toSeq

@@ -25,7 +25,7 @@ with IntegerTokenizer with NameTokenizer:
       case _ if isName(s) => Token(TokenType.Name, s) // If all characters are letters, it's an identifier
       case _ => Token(TokenType.Illegal, s) // Anything else is considered illegal
 
-class BasicParser(using fundefParser: FundefParser)(using expressionParser: ExpressionParser)
+/*class BasicParser(using fundefParser: FundefParser)(using expressionParser: ExpressionParser)
   extends Parser[FunDefNode | ExpressionNode]
     with ExtractFromOption
     with InvalidToken:
@@ -53,7 +53,7 @@ class BasicParser(using fundefParser: FundefParser)(using expressionParser: Expr
             exprOpt <- expressionParser.parseExpression(rest)
             expr <- extract(exprOpt, "Expected expression")
           yield expr
-
+*/
 class BasicFundefParser extends
   FundefParser
   with InvalidToken:

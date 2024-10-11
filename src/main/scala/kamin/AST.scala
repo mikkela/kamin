@@ -1,8 +1,8 @@
 package kamin
 
-sealed trait Node
+trait Node
 
-sealed trait InputNode extends Node
+trait InputNode extends Node
 
 sealed trait FunDefNode extends InputNode:
   def function: FunctionNode

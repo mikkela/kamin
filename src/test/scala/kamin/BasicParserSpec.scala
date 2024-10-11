@@ -4,7 +4,7 @@ import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
 
 class BasicParserSpec extends AnyFunSpec with Matchers {
-  private val lexer = Lexer(using BasicTokenizer)
+  /*private val lexer = Lexer(using BasicTokenizer)
   private val parser = BasicParser(using BasicFundefParser())(using BasicExpressionParser())
   describe("parse method") {
     it("should return an error message when presented with an empty string") {
@@ -24,5 +24,5 @@ class BasicParserSpec extends AnyFunSpec with Matchers {
 
       result shouldBe Left("foo is an unexpected token")
     }
-  }
+  }*/
 }
