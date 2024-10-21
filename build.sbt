@@ -7,4 +7,7 @@ lazy val root = (project in file("."))
     name := "kamin"
   )
 libraryDependencies += "org.jline" % "jline" % "3.23.0"
-libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.19" % "test"
+libraryDependencies ++= Seq(
+  "org.scalatestplus" %% "mockito-5-10" % "3.2.18.0" % Test,
+  "org.scalatest" %% "scalatest" % "3.2.18" % Test
+)

@@ -2,19 +2,31 @@ package kamin
 
 trait Node
 
+sealed trait FunctionNode extends Node
+
+case class ASTFunctionNode(name: String) extends FunctionNode
+
+sealed trait ValueNode extends Node
+
+case class ASTIntegerValueNode(value: Int) extends ValueNode
+
+sealed trait VariableNode extends Node
+
+case class ASTVariableNode(variable: String) extends VariableNode
+
 trait InputNode extends Node
 
 sealed trait FunDefNode extends InputNode:
   def function: FunctionNode
 
-case class ASTFunDefNode(function: FunctionNode, arglist: Seq[VariableNode], expression: ExpressionNode)
+case class ASTFunDefNode(function: FunctionNode, arglist: Seq[String], expression: ExpressionNode)
   extends FunDefNode
 
 sealed trait ExpressionNode extends InputNode
 
 sealed trait ValueExpressionNode extends ExpressionNode
 
-case class ASTValueExpressionNode(value: ValueNode) extends ValueExpressionNode
+case class ASTValueExpressionNode(valueExpression: ValueNode) extends ValueExpressionNode
 
 sealed trait VariableExpressionNode extends ExpressionNode
 
@@ -34,7 +46,7 @@ case class ASTWhileExpressionNode(testExpression: ExpressionNode,
 sealed trait SetExpressionNode extends ExpressionNode
 
 case class ASTSetExpressionNode(variable: VariableNode,
-                            valueExpression: ValueExpressionNode) extends SetExpressionNode
+                                value: ExpressionNode) extends SetExpressionNode
 
 sealed trait BeginExpressionNode extends ExpressionNode
 
@@ -44,18 +56,9 @@ sealed trait OptrExpressionNode extends ExpressionNode
 
 case class ASTOptrExpressionNode(optr: OptrNode, expressions: Seq[ExpressionNode]) extends OptrExpressionNode
 
-trait OptrNode extends Node
+sealed trait OptrNode extends Node
 
-sealed trait FunctionOptrNode extends ExpressionNode
-
-case class ASTFunctionOptrNode(function: FunctionNode) extends FunctionOptrNode
-
-trait ValueOperationNode extends OptrNode
-
-trait ValueNode extends Node:
-  def value: Int
-
-case class ASTValueNode(value: Int) extends ValueNode
+sealed trait ValueOperationNode extends OptrNode
 
 case class ASTPlusValueOperationNode() extends ValueOperationNode
 
@@ -73,10 +76,6 @@ case class ASTGreaterThanValueOperationNode() extends ValueOperationNode
 
 case class ASTPrintValueOperationNode() extends ValueOperationNode
 
-trait FunctionNode extends Node
+case class ASTFunctionOperationNode(functionNode: FunctionNode) extends OptrNode
 
-case class ASTFunctionNode(name: String) extends FunctionNode
 
-trait VariableNode extends Node
-
-case class ASTVariableNode(name: String) extends VariableNode
