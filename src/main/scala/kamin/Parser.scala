@@ -54,21 +54,6 @@ trait Parser[ResultType <: Node, TParserContext <: ParserContext]:
   protected def invalidEndOfProgram: Either[String, Nothing] =
     Left("Invalid end of program")
 
-trait OptrNodeParser extends Parser[OptrNode, BasicLanguageFamilyParserContext]:
-  override def parse(tokens: PeekingIterator[Token])(using context: BasicLanguageFamilyParserContext): Either[String, OptrNode] =
-    tokens.peek(1) match
-      case List(Token(TokenType.Plus, literal)) => tokens.next(); Right(ASTPlusValueOperationNode())
-      case List(Token(TokenType.Minus, literal)) => tokens.next(); Right(ASTMinusValueOperationNode())
-      case List(Token(TokenType.Asteriks, literal)) => tokens.next(); Right(ASTMultiplicationValueOperationNode())
-      case List(Token(TokenType.Slash, literal)) => tokens.next(); Right(ASTDivisionValueOperationNode())
-      case List(Token(TokenType.Equal, literal)) => tokens.next(); Right(ASTEqualValueOperationNode())
-      case List(Token(TokenType.LessThan, literal)) => tokens.next(); Right(ASTLessThanValueOperationNode())
-      case List(Token(TokenType.GreaterThan, literal)) => tokens.next(); Right(ASTGreaterThanValueOperationNode())
-      case List(Token(TokenType.Print, literal)) => tokens.next(); Right(ASTPrintValueOperationNode())
-      case List(Token(Name, literal)) => tokens.next(); Right(ASTFunctionOperationNode(ASTFunctionNode(literal)))
-      case _ => super.parse(tokens)
-
-
 trait IntegerValueExpressionNodeParser extends Parser[ExpressionNode, BasicLanguageFamilyParserContext]:
   override def parse(tokens: PeekingIterator[Token])(using context: BasicLanguageFamilyParserContext): Either[String, ExpressionNode] =
     checkTokensForPresence(tokens, TokenType.Integer) match

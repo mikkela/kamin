@@ -23,62 +23,6 @@ class ParserSpec extends AnyFunSpec
     }
   }
 
-  describe("An optr node parser") {
-    it("should return a plus value node when + is the next token") {
-      val sut = new OptrNodeParser {}
-
-      sut.parse(PeekingIterator(Seq(Token(TokenType.Plus, "+")).iterator))(using context = null) shouldBe Right(ASTPlusValueOperationNode())
-    }
-
-    it("should return a minus value node when - is the next token") {
-      val sut = new OptrNodeParser {}
-
-      sut.parse(PeekingIterator(Seq(Token(TokenType.Minus, "-")).iterator))(using context = null) shouldBe Right(ASTMinusValueOperationNode())
-    }
-
-    it("should return a multiplication value node when * is the next token") {
-      val sut = new OptrNodeParser {}
-
-      sut.parse(PeekingIterator(Seq(Token(TokenType.Asteriks, "*")).iterator))(using context = null) shouldBe Right(ASTMultiplicationValueOperationNode())
-    }
-
-    it("should return a division value node when / is the next token") {
-      val sut = new OptrNodeParser {}
-
-      sut.parse(PeekingIterator(Seq(Token(TokenType.Slash, "/")).iterator))(using context = null) shouldBe Right(ASTDivisionValueOperationNode())
-    }
-
-    it("should return a equality value node when / is the next token") {
-      val sut = new OptrNodeParser {}
-
-      sut.parse(PeekingIterator(Seq(Token(TokenType.Equal, "=")).iterator))(using context = null) shouldBe Right(ASTEqualValueOperationNode())
-    }
-
-    it("should return a less than value node when < is the next token") {
-      val sut = new OptrNodeParser {}
-
-      sut.parse(PeekingIterator(Seq(Token(TokenType.LessThan, "<")).iterator))(using context = null) shouldBe Right(ASTLessThanValueOperationNode())
-    }
-
-    it("should return a greater than value node when > is the next token") {
-      val sut = new OptrNodeParser {}
-
-      sut.parse(PeekingIterator(Seq(Token(TokenType.GreaterThan, ">")).iterator))(using context = null) shouldBe Right(ASTGreaterThanValueOperationNode())
-    }
-
-    it("should return a print value node when print is the next token") {
-      val sut = new OptrNodeParser {}
-
-      sut.parse(PeekingIterator(Seq(Token(TokenType.Print, "PRINT")).iterator))(using context = null) shouldBe Right(ASTPrintValueOperationNode())
-    }
-
-    it("should return a function node when name is the next token") {
-      val sut = new OptrNodeParser {}
-
-      sut.parse(PeekingIterator(Seq(Token(TokenType.Name, "myFoo")).iterator))(using context = null) shouldBe Right(ASTFunctionOperationNode(ASTFunctionNode("myFoo")))
-    }
-  }
-
   describe("An integer value expression node parser") {
     it("should return a value node expression when presented with a valid integer") {
       val peekingIterator = PeekingIterator(Seq(Token(TokenType.Integer, "96575")).iterator)
