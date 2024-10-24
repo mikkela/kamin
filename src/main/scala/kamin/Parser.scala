@@ -10,14 +10,45 @@ trait ParserContext
 trait BasicLanguageFamilyParserContext extends ParserContext:
   def parseExpression(tokens: PeekingIterator[Token]): Either[String, ExpressionNode]
 
+  def parseFixedNumberOfExpressions(tokens: PeekingIterator[Token], count: Int):
+  Either[String, Seq[ExpressionNode]] =
+    (1 to count).foldLeft(Right(Nil): Either[String, List[ExpressionNode]]) { (acc, _) =>
+      acc.flatMap { exprs =>
+        parseExpression(tokens).map(exprs :+ _)
+      }
+    }
+
+  def parseExpressions(tokens: PeekingIterator[Token]): Either[String, Seq[ExpressionNode]] =
+    var expressions = List.empty[ExpressionNode]
+    var peek = tokens.peek(1)
+    while (peek.nonEmpty && peek(0).tokenType != RightParenthesis)
+      parseExpression(tokens) match
+        case Left(value) => return Left(value)
+        case Right(expression) =>
+          expressions = expressions :+ expression
+      tokens.next()
+      peek = tokens.peek(1)
+    Right(expressions)
+
 trait Parser[ResultType <: Node, TParserContext <: ParserContext]:
+  protected def checkTokensForPresence(tokens: PeekingIterator[Token], expected: TokenType*) : Either[String, Seq[Token]] =
+    var peeks = tokens.peek(expected.length)
+    if peeks.length < expected.length then
+      return invalidEndOfProgram
+    expected.zip(peeks).foldLeft[Either[String, List[Token]]](Right(Nil)) {
+      case (Right(acc), (expectedType, peek)) =>
+        if expectedType == peek.tokenType then Right(acc :+ peek)
+        else invalidToken(peek)
+      case (left, _) => left // Early termination if error found
+    }
+
   def parse(tokens: PeekingIterator[Token])(using context: TParserContext): Either[String, ResultType] =
     if tokens.hasNext then
       invalidToken(tokens.next())
     else
       invalidEndOfProgram
 
-  protected def invalidToken(token: Token) =
+  protected def invalidToken(token: Token): Left[String, Nothing] =
     Left(s"${token.literal} is an unexpected token")
 
   protected def invalidEndOfProgram: Either[String, Nothing] =
@@ -38,121 +69,103 @@ trait OptrNodeParser extends Parser[OptrNode, BasicLanguageFamilyParserContext]:
       case _ => super.parse(tokens)
 
 
-trait ValueExpressionNodeParser extends Parser[ExpressionNode, BasicLanguageFamilyParserContext]:
+trait IntegerValueExpressionNodeParser extends Parser[ExpressionNode, BasicLanguageFamilyParserContext]:
   override def parse(tokens: PeekingIterator[Token])(using context: BasicLanguageFamilyParserContext): Either[String, ExpressionNode] =
-    tokens.peek(1) match
-      case List(Token(TokenType.Integer, literal)) =>
-        tokens.next();
-        Right(ASTValueExpressionNode(ASTIntegerValueNode(literal.toInt)))
+    checkTokensForPresence(tokens, TokenType.Integer) match
+      case Right(Seq(value)) =>
+        tokens.consumeTokens(1)
+        Right(ASTValueExpressionNode(ASTIntegerValueNode(value.literal.toInt)))
       case _ => super.parse(tokens)
 
 
 trait VariableExpressionNodeParser extends Parser[ExpressionNode, BasicLanguageFamilyParserContext]:
   override def parse(tokens: PeekingIterator[Token])(using context: BasicLanguageFamilyParserContext): Either[String, ExpressionNode] =
-    tokens.peek(1) match
-      case List(Token(TokenType.Name, literal)) =>
-        tokens.next()
-        Right(ASTVariableExpressionNode(ASTVariableNode(literal)))
+    checkTokensForPresence(tokens, TokenType.Name) match
+      case Right(Seq(value)) =>
+        tokens.consumeTokens(1)
+        Right(ASTVariableExpressionNode(ASTVariableNode(value.literal)))
       case _ => super.parse(tokens)
 
-trait CompoundExpressionParser extends Parser[ExpressionNode, BasicLanguageFamilyParserContext]:
-  private def validateAndConsumeTokens(tokens: PeekingIterator[Token], expected: TokenType*): Either[String, Unit] =
-    var peeks = tokens.peek(expected.length)
-    if peeks.length < expected.length then
-      return invalidEndOfProgram
-    expected.foreach { t =>
-      if t != peeks.head.tokenType then
-        return invalidToken(peeks.head)
-      peeks = peeks.tail
-    }
-
-    expected.foreach { _ =>
-      tokens.next()
-    }
-    Right(())
-
-  protected def checkOpeningParenthesis(tokens: PeekingIterator[Token], keyword: TokenType): Either[String, Unit] =
-    validateAndConsumeTokens(tokens = tokens, expected = LeftParenthesis, keyword)
-
-  protected def parseExpressions(tokens: PeekingIterator[Token], count: Int, context: BasicLanguageFamilyParserContext):
-  Either[String, List[ExpressionNode]] =
-    (1 to count).foldLeft(Right(Nil): Either[String, List[ExpressionNode]]) { (acc, _) =>
-      acc.flatMap { exprs =>
-        context.parseExpression(tokens).map(exprs :+ _)
-      }
-    }
-
-  protected def parseExpressions(tokens: PeekingIterator[Token], context: BasicLanguageFamilyParserContext):
-  Either[String, List[ExpressionNode]] =
-    var expressions = List.empty[ExpressionNode]
-    var peek = tokens.peek(1)
-    while (peek.length > 0 && peek(0).tokenType != RightParenthesis)
-      context.parseExpression(tokens) match
-        case Left(value) => return Left(value)
-        case Right(expression) =>
-          expressions = expressions :+ expression
-      tokens.next()
-      peek = tokens.peek(1)
-    Right(expressions)
-  
-  protected def checkClosingParenthesis(tokens: PeekingIterator[Token]): Either[String, Unit] =
-    validateAndConsumeTokens(tokens = tokens, expected = RightParenthesis)
-
-trait IfExpressionNodeParser extends CompoundExpressionParser:
+trait IfExpressionNodeParser extends Parser[ExpressionNode, BasicLanguageFamilyParserContext]:
   override def parse(tokens: PeekingIterator[Token])(using context: BasicLanguageFamilyParserContext): Either[String, ExpressionNode] =
-    checkOpeningParenthesis(tokens, TokenType.If) match
-      case Left(value) => super.parse(tokens)
-      case Right(()) =>
-        parseExpressions(tokens, 3, context) match
+    checkTokensForPresence(tokens, TokenType.LeftParenthesis, TokenType.If) match
+      case Left(_) => super.parse(tokens)
+      case Right(_) =>
+        tokens.consumeTokens(2)
+        context.parseFixedNumberOfExpressions(tokens, 3) match
           case Left(value) => Left(value)
-          case Right(List(testExpression, consequenceExpression, alternativeExpression)) =>
-            checkClosingParenthesis(tokens) match
+          case Right(Seq(testExpression, consequenceExpression, alternativeExpression)) =>
+            checkTokensForPresence(tokens, TokenType.RightParenthesis) match
               case Left(value) => Left(value)
-              case Right(()) => Right(kamin.ASTIfExpressionNode(testExpression, consequenceExpression, alternativeExpression))
+              case Right(_) =>
+                tokens.consumeTokens(1)
+                Right(kamin.ASTIfExpressionNode(testExpression, consequenceExpression, alternativeExpression))
 
-trait WhileExpressionNodeParser extends CompoundExpressionParser:
+trait WhileExpressionNodeParser extends Parser[ExpressionNode, BasicLanguageFamilyParserContext]:
   override def parse(tokens: PeekingIterator[Token])(using context: BasicLanguageFamilyParserContext): Either[String, ExpressionNode] =
-    checkOpeningParenthesis(tokens, TokenType.While) match
-      case Left(value) => super.parse(tokens)
-      case Right(()) =>
-        parseExpressions(tokens, 2, context) match
+    checkTokensForPresence(tokens, TokenType.LeftParenthesis, TokenType.While) match
+      case Left(_) => super.parse(tokens)
+      case Right(_) =>
+        tokens.consumeTokens(2)
+        context.parseFixedNumberOfExpressions(tokens, 2) match
           case Left(value) => Left(value)
-          case Right(List(testExpression, bodyExpression)) =>
-            checkClosingParenthesis(tokens) match
+          case Right(Seq(testExpression, bodyExpression)) =>
+            checkTokensForPresence(tokens, TokenType.RightParenthesis) match
               case Left(value) => Left(value)
-              case Right(()) => Right(kamin.ASTWhileExpressionNode(testExpression, bodyExpression))
+              case Right(_) =>
+                tokens.consumeTokens(1)
+                Right(kamin.ASTWhileExpressionNode(testExpression, bodyExpression))
 
-trait SetExpressionNodeParser extends CompoundExpressionParser:
+trait SetExpressionNodeParser extends Parser[ExpressionNode, BasicLanguageFamilyParserContext]:
   override def parse(tokens: PeekingIterator[Token])(using context: BasicLanguageFamilyParserContext): Either[String, ExpressionNode] =
-    checkOpeningParenthesis(tokens, TokenType.Set) match
-      case Left(value) => super.parse(tokens)
-      case Right(()) =>
-        tokens.peek(1) match
-          case List(Token(TokenType.Name, variable)) =>
-            tokens.next() // Consume variable
-            parseExpressions(tokens, 1, context) match
-              case Left(value) => Left(value)
-              case Right(List(valueExpression)) =>
-                checkClosingParenthesis(tokens) match
+    checkTokensForPresence(tokens, TokenType.LeftParenthesis, TokenType.Set) match
+      case Left(_) => super.parse(tokens)
+      case Right(_) =>
+        tokens.consumeTokens(2)
+        checkTokensForPresence(tokens, TokenType.Name) match
+          case Right(Seq(Token(TokenType.Name, variable))) =>
+            tokens.consumeTokens(1)
+            context.parseFixedNumberOfExpressions(tokens, 1) match
+              case Left(value) =>
+                Left(value)
+              case Right(Seq(valueExpression)) =>
+                checkTokensForPresence(tokens, TokenType.RightParenthesis) match
                   case Left(value) => Left(value)
-                  case Right(()) => Right(kamin.ASTSetExpressionNode(ASTVariableNode(variable), valueExpression))
-          case List(token) => invalidToken(token)
-          case _ => invalidEndOfProgram
+                  case Right(_) => Right(kamin.ASTSetExpressionNode(ASTVariableNode(variable), valueExpression))
+          case Left(value) => Left(value)
 
-trait BeginExpressionNodeParser extends CompoundExpressionParser:
+trait BeginExpressionNodeParser extends Parser[ExpressionNode, BasicLanguageFamilyParserContext]:
   override def parse(tokens: PeekingIterator[Token])(using context: BasicLanguageFamilyParserContext): Either[String, ExpressionNode] =
-    checkOpeningParenthesis(tokens, TokenType.Begin) match
-      case Left(value) => super.parse(tokens)
-      case Right(()) =>
-        parseExpressions(tokens, context) match
+    checkTokensForPresence(tokens, TokenType.LeftParenthesis, TokenType.Begin) match
+      case Left(_) => super.parse(tokens)
+      case Right(_) =>
+        tokens.consumeTokens(2)
+        context.parseExpressions(tokens) match
           case Left(value) => Left(value)
           case Right(expressions) if expressions.length > 0 =>
-            checkClosingParenthesis(tokens) match
+            checkTokensForPresence(tokens, TokenType.RightParenthesis) match
               case Left(value) => Left(value)
-              case Right(()) => Right(ASTBeginExpressionNode(expressions))
+              case Right(_) => Right(ASTBeginExpressionNode(expressions))
           case Right(_) =>
             tokens.peek(1) match
               case List(token) => invalidToken(token)
               case _ => invalidEndOfProgram
+
+trait OptrExpressionNodeParser extends Parser[ExpressionNode, BasicLanguageFamilyParserContext]:
+  protected def parse(tokens: PeekingIterator[Token], expectedOptrTokenType: TokenType, optrNode: OptrNode, context: BasicLanguageFamilyParserContext): Either[String, ExpressionNode] =
+    checkTokensForPresence(tokens, TokenType.LeftParenthesis, expectedOptrTokenType) match
+      case Left(_) => super.parse(tokens)(using context)
+      case Right(_) =>
+        tokens.consumeTokens(2)
+        context.parseExpressions(tokens) match
+          case Left(value) => Left(value)
+          case Right(expressions)  =>
+            checkTokensForPresence(tokens, TokenType.RightParenthesis) match
+              case Left(value) => Left(value)
+              case Right(_) => Right(ASTOptrExpressionNode(optrNode, expressions))
+
+trait PlusExpressionNodeParser extends OptrExpressionNodeParser:
+  override def parse(tokens: PeekingIterator[Token])(using context: BasicLanguageFamilyParserContext): Either[String, ExpressionNode] =
+    parse(tokens, TokenType.Plus, ASTPlusValueOperationNode(), context)
 
 

@@ -15,6 +15,9 @@ class PeekingIterator[A](iter: Iterator[A]) extends Iterator[A]:
       buffer = buffer ++ newElements
       buffer.take(n)
 
+  def consumeTokens(n: Int) =
+    (1 to n).foreach(_ => next())
+
   // Has next only if there are elements in the buffer or the original iterator
   override def hasNext: Boolean = buffer.nonEmpty || iter.hasNext
 

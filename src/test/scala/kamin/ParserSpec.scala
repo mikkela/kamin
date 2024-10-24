@@ -1,13 +1,14 @@
 package kamin
 
 import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.prop.TableDrivenPropertyChecks
 import org.scalatest.matchers.should.Matchers
-import org.mockito.Mockito.*
 import org.scalatestplus.mockito.MockitoSugar
-import org.mockito.ArgumentCaptor
-import org.mockito.ArgumentMatchers.any
 
-class ParserSpec extends AnyFunSpec with Matchers with MockitoSugar {
+class ParserSpec extends AnyFunSpec
+  with Matchers
+  with MockitoSugar
+  with TableDrivenPropertyChecks {
   describe("A Parser") {
     it("should return an error when presented with an empty token stream") {
       val sut = new Parser[Node, ParserContext] {}
@@ -78,17 +79,17 @@ class ParserSpec extends AnyFunSpec with Matchers with MockitoSugar {
     }
   }
 
-  describe("An value expression node parser") {
+  describe("An integer value expression node parser") {
     it("should return a value node expression when presented with a valid integer") {
       val peekingIterator = PeekingIterator(Seq(Token(TokenType.Integer, "96575")).iterator)
-      val sut = new ValueExpressionNodeParser {}
+      val sut = new IntegerValueExpressionNodeParser {}
 
       sut.parse(peekingIterator)(using context = null) shouldBe Right(ASTValueExpressionNode(ASTIntegerValueNode(96575)))
     }
 
     it("should return an error when presented with a non-integer") {
       val peekingIterator = PeekingIterator(Seq(Token(TokenType.Name, "HH96575")).iterator)
-      val sut = new ValueExpressionNodeParser {}
+      val sut = new IntegerValueExpressionNodeParser {}
 
       sut.parse(peekingIterator)(using context = null) shouldBe Left("HH96575 is an unexpected token")
     }
@@ -433,6 +434,119 @@ class ParserSpec extends AnyFunSpec with Matchers with MockitoSugar {
       val sut = new BeginExpressionNodeParser {}
 
       sut.parse(peekingIterator)(using context) shouldBe Left("Something went wrong in parsing")
+    }
+  }
+
+  private val optrTable = Table(
+    ("Parser", "Token Type", "Expected Optr Value Node"),
+    (new PlusExpressionNodeParser{}, TokenType.Plus, ASTPlusValueOperationNode()),
+    /*(")", Token(TokenType.RightParenthesis, ")")),
+    ("=", Token(TokenType.Equal, "=")),
+    ("+", Token(TokenType.Plus, "+")),
+    ("-", Token(TokenType.Minus, "-")),
+    ("*", Token(TokenType.Asteriks, "*")),
+    ("/", Token(TokenType.Slash, "/")),
+    ("<", Token(TokenType.LessThan, "<")),
+    (">", Token(TokenType.GreaterThan, ">")),
+    ("define", Token(TokenType.Define, "DEFINE")),
+    ("print", Token(TokenType.Print, "PRINT")),
+    ("if", Token(TokenType.If, "IF")),
+    ("while", Token(TokenType.While, "WHILE")),
+    ("set", Token(TokenType.Set, "SET")),
+    ("begin", Token(TokenType.Begin, "BEGIN")),
+    ("abe", Token(TokenType.Name, "abe")),
+    ("-345", Token(TokenType.Integer, "-345")),
+    ("56", Token(TokenType.Integer, "56"))*/
+  )
+
+  describe("Optr expression node parsers") {
+    it("should return a optr expression node expression when presented with a valid optr construction and list of expressions") {
+      val expression1 = mock[ExpressionNode]
+      val expression2 = mock[ExpressionNode]
+      val expression3 = mock[ExpressionNode]
+
+      forAll(optrTable) {
+        (parser, optrTokenType, optrValueNode) =>
+          val results = Seq(Right(expression1), Right(expression2), Right(expression3)).iterator
+          val context = new BasicLanguageFamilyParserContext {
+            override def parseExpression(tokens: PeekingIterator[Token]): Either[String, ExpressionNode] =
+              results.next()
+          }
+
+          val peekingIterator = PeekingIterator(Seq(
+            Token(TokenType.LeftParenthesis, "("), Token(optrTokenType, "OPERAND"),
+            Token(TokenType.Name, "eaten"), Token(TokenType.Name, "eaten"), Token(TokenType.Name, "eaten"),
+            Token(TokenType.RightParenthesis, ")")
+          ).iterator)
+
+          val sut = parser
+
+          sut.parse(peekingIterator)(using context) shouldBe Right(ASTOptrExpressionNode(optrValueNode, Seq(expression1, expression2, expression3)))
+      }
+    }
+
+    it("should return a optr expression node expression when presented with a valid optr construction and single expression") {
+      val expression = mock[ExpressionNode]
+
+      forAll(optrTable) {
+        (parser, optrTokenType, optrValueNode) =>
+          val results = Seq(Right(expression)).iterator
+          val context = new BasicLanguageFamilyParserContext {
+            override def parseExpression(tokens: PeekingIterator[Token]): Either[String, ExpressionNode] =
+              results.next()
+          }
+
+          val peekingIterator = PeekingIterator(Seq(
+            Token(TokenType.LeftParenthesis, "("), Token(optrTokenType, "OPERAND"),
+            Token(TokenType.Name, "eaten"),
+            Token(TokenType.RightParenthesis, ")")
+          ).iterator)
+
+          val sut = parser
+
+          sut.parse(peekingIterator)(using context) shouldBe Right(ASTOptrExpressionNode(optrValueNode, Seq(expression)))
+      }
+    }
+
+    it("should return a optr expression node expression when presented with a valid optr construction and no expressions") {
+      forAll(optrTable) {
+        (parser, optrTokenType, optrValueNode) =>
+          val results = Seq.empty.iterator
+          val context = new BasicLanguageFamilyParserContext {
+            override def parseExpression(tokens: PeekingIterator[Token]): Either[String, ExpressionNode] =
+              results.next()
+          }
+
+          val peekingIterator = PeekingIterator(Seq(
+            Token(TokenType.LeftParenthesis, "("), Token(optrTokenType, "OPERAND"),
+            Token(TokenType.RightParenthesis, ")")
+          ).iterator)
+
+          val sut = parser
+
+          sut.parse(peekingIterator)(using context) shouldBe Right(ASTOptrExpressionNode(optrValueNode, Seq.empty))
+      }
+    }
+
+    it("should return the error when an expression parsing fails") {
+      forAll(optrTable) {
+        (parser, optrTokenType, optrValueNode) =>
+          val results = Seq(Right(mock[ExpressionNode]), Left("Something went wrong in parsing"), Right(mock[ExpressionNode])).iterator
+          val context = new BasicLanguageFamilyParserContext {
+            override def parseExpression(tokens: PeekingIterator[Token]): Either[String, ExpressionNode] =
+              results.next()
+          }
+
+          val peekingIterator = PeekingIterator(Seq(
+            Token(TokenType.LeftParenthesis, "("), Token(optrTokenType, "OPERAND"),
+            Token(TokenType.Name, "eaten"), Token(TokenType.Name, "eaten"),
+            Token(TokenType.RightParenthesis, ")")
+          ).iterator)
+
+          val sut = parser
+
+          sut.parse(peekingIterator)(using context) shouldBe Left("Something went wrong in parsing")
+      }
     }
   }
 }
