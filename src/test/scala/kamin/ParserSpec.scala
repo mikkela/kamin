@@ -438,25 +438,16 @@ class ParserSpec extends AnyFunSpec
   }
 
   private val optrTable = Table(
-    ("Parser", "Token Type", "Expected Optr Value Node"),
-    (new PlusExpressionNodeParser{}, TokenType.Plus, ASTPlusValueOperationNode()),
-    /*(")", Token(TokenType.RightParenthesis, ")")),
-    ("=", Token(TokenType.Equal, "=")),
-    ("+", Token(TokenType.Plus, "+")),
-    ("-", Token(TokenType.Minus, "-")),
-    ("*", Token(TokenType.Asteriks, "*")),
-    ("/", Token(TokenType.Slash, "/")),
-    ("<", Token(TokenType.LessThan, "<")),
-    (">", Token(TokenType.GreaterThan, ">")),
-    ("define", Token(TokenType.Define, "DEFINE")),
-    ("print", Token(TokenType.Print, "PRINT")),
-    ("if", Token(TokenType.If, "IF")),
-    ("while", Token(TokenType.While, "WHILE")),
-    ("set", Token(TokenType.Set, "SET")),
-    ("begin", Token(TokenType.Begin, "BEGIN")),
-    ("abe", Token(TokenType.Name, "abe")),
-    ("-345", Token(TokenType.Integer, "-345")),
-    ("56", Token(TokenType.Integer, "56"))*/
+    ("Parser", "Token", "Expected Optr Value Node"),
+    (new PlusExpressionNodeParser{}, Token(TokenType.Plus, "OPERAND"), ASTPlusValueOperationNode()),
+    (new MinusExpressionNodeParser{}, Token(TokenType.Minus, "OPERAND"), ASTMinusValueOperationNode()),
+    (new MultiplicationExpressionNodeParser{}, Token(TokenType.Asteriks, "OPERAND"), ASTMultiplicationValueOperationNode()),
+    (new DivisionExpressionNodeParser {}, Token(TokenType.Slash, "OPERAND"), ASTDivisionValueOperationNode()),
+    (new EqualExpressionNodeParser{}, Token(TokenType.Equal, "OPERAND"), ASTEqualValueOperationNode()),
+    (new LessThanExpressionNodeParser{}, Token(TokenType.LessThan, "OPERAND"), ASTLessThanValueOperationNode()),
+    (new GreaterThanExpressionNodeParser{}, Token(TokenType.GreaterThan, "OPERAND"), ASTGreaterThanValueOperationNode()),
+    (new PrintExpressionNodeParser{}, Token(TokenType.Print, "OPERAND"), ASTPrintValueOperationNode()),
+    (new FunctionCallExpressionNodeParser{}, Token(TokenType.Name, "foo"), ASTFunctionOperationNode(kamin.ASTFunctionNode("foo")))
   )
 
   describe("Optr expression node parsers") {
@@ -466,7 +457,7 @@ class ParserSpec extends AnyFunSpec
       val expression3 = mock[ExpressionNode]
 
       forAll(optrTable) {
-        (parser, optrTokenType, optrValueNode) =>
+        (parser, token, optrValueNode) =>
           val results = Seq(Right(expression1), Right(expression2), Right(expression3)).iterator
           val context = new BasicLanguageFamilyParserContext {
             override def parseExpression(tokens: PeekingIterator[Token]): Either[String, ExpressionNode] =
@@ -474,7 +465,7 @@ class ParserSpec extends AnyFunSpec
           }
 
           val peekingIterator = PeekingIterator(Seq(
-            Token(TokenType.LeftParenthesis, "("), Token(optrTokenType, "OPERAND"),
+            Token(TokenType.LeftParenthesis, "("), token,
             Token(TokenType.Name, "eaten"), Token(TokenType.Name, "eaten"), Token(TokenType.Name, "eaten"),
             Token(TokenType.RightParenthesis, ")")
           ).iterator)
@@ -489,7 +480,7 @@ class ParserSpec extends AnyFunSpec
       val expression = mock[ExpressionNode]
 
       forAll(optrTable) {
-        (parser, optrTokenType, optrValueNode) =>
+        (parser, token, optrValueNode) =>
           val results = Seq(Right(expression)).iterator
           val context = new BasicLanguageFamilyParserContext {
             override def parseExpression(tokens: PeekingIterator[Token]): Either[String, ExpressionNode] =
@@ -497,7 +488,7 @@ class ParserSpec extends AnyFunSpec
           }
 
           val peekingIterator = PeekingIterator(Seq(
-            Token(TokenType.LeftParenthesis, "("), Token(optrTokenType, "OPERAND"),
+            Token(TokenType.LeftParenthesis, "("), token,
             Token(TokenType.Name, "eaten"),
             Token(TokenType.RightParenthesis, ")")
           ).iterator)
@@ -510,7 +501,7 @@ class ParserSpec extends AnyFunSpec
 
     it("should return a optr expression node expression when presented with a valid optr construction and no expressions") {
       forAll(optrTable) {
-        (parser, optrTokenType, optrValueNode) =>
+        (parser, token, optrValueNode) =>
           val results = Seq.empty.iterator
           val context = new BasicLanguageFamilyParserContext {
             override def parseExpression(tokens: PeekingIterator[Token]): Either[String, ExpressionNode] =
@@ -518,7 +509,7 @@ class ParserSpec extends AnyFunSpec
           }
 
           val peekingIterator = PeekingIterator(Seq(
-            Token(TokenType.LeftParenthesis, "("), Token(optrTokenType, "OPERAND"),
+            Token(TokenType.LeftParenthesis, "("), token,
             Token(TokenType.RightParenthesis, ")")
           ).iterator)
 
@@ -530,7 +521,7 @@ class ParserSpec extends AnyFunSpec
 
     it("should return the error when an expression parsing fails") {
       forAll(optrTable) {
-        (parser, optrTokenType, optrValueNode) =>
+        (parser, token, optrValueNode) =>
           val results = Seq(Right(mock[ExpressionNode]), Left("Something went wrong in parsing"), Right(mock[ExpressionNode])).iterator
           val context = new BasicLanguageFamilyParserContext {
             override def parseExpression(tokens: PeekingIterator[Token]): Either[String, ExpressionNode] =
@@ -538,7 +529,7 @@ class ParserSpec extends AnyFunSpec
           }
 
           val peekingIterator = PeekingIterator(Seq(
-            Token(TokenType.LeftParenthesis, "("), Token(optrTokenType, "OPERAND"),
+            Token(TokenType.LeftParenthesis, "("), token,
             Token(TokenType.Name, "eaten"), Token(TokenType.Name, "eaten"),
             Token(TokenType.RightParenthesis, ")")
           ).iterator)

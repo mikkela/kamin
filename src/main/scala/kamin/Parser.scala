@@ -152,20 +152,50 @@ trait BeginExpressionNodeParser extends Parser[ExpressionNode, BasicLanguageFami
               case _ => invalidEndOfProgram
 
 trait OptrExpressionNodeParser extends Parser[ExpressionNode, BasicLanguageFamilyParserContext]:
-  protected def parse(tokens: PeekingIterator[Token], expectedOptrTokenType: TokenType, optrNode: OptrNode, context: BasicLanguageFamilyParserContext): Either[String, ExpressionNode] =
+  protected def parse(tokens: PeekingIterator[Token], expectedOptrTokenType: TokenType, optrNodeProducer: String => OptrNode, context: BasicLanguageFamilyParserContext): Either[String, ExpressionNode] =
     checkTokensForPresence(tokens, TokenType.LeftParenthesis, expectedOptrTokenType) match
       case Left(_) => super.parse(tokens)(using context)
-      case Right(_) =>
+      case Right(Seq(Token(LeftParenthesis, _), Token(expectedOptrTokenType, literal))) =>
         tokens.consumeTokens(2)
         context.parseExpressions(tokens) match
           case Left(value) => Left(value)
           case Right(expressions)  =>
             checkTokensForPresence(tokens, TokenType.RightParenthesis) match
               case Left(value) => Left(value)
-              case Right(_) => Right(ASTOptrExpressionNode(optrNode, expressions))
+              case Right(_) => Right(ASTOptrExpressionNode(optrNodeProducer(literal), expressions))
 
 trait PlusExpressionNodeParser extends OptrExpressionNodeParser:
   override def parse(tokens: PeekingIterator[Token])(using context: BasicLanguageFamilyParserContext): Either[String, ExpressionNode] =
-    parse(tokens, TokenType.Plus, ASTPlusValueOperationNode(), context)
+    parse(tokens, TokenType.Plus, _ => ASTPlusValueOperationNode(), context)
 
+trait MinusExpressionNodeParser extends OptrExpressionNodeParser:
+  override def parse(tokens: PeekingIterator[Token])(using context: BasicLanguageFamilyParserContext): Either[String, ExpressionNode] =
+    parse(tokens, TokenType.Minus, _ => ASTMinusValueOperationNode(), context)
 
+trait MultiplicationExpressionNodeParser extends OptrExpressionNodeParser:
+  override def parse(tokens: PeekingIterator[Token])(using context: BasicLanguageFamilyParserContext): Either[String, ExpressionNode] =
+    parse(tokens, TokenType.Asteriks, _ =>ASTMultiplicationValueOperationNode(), context)
+
+trait DivisionExpressionNodeParser extends OptrExpressionNodeParser:
+  override def parse(tokens: PeekingIterator[Token])(using context: BasicLanguageFamilyParserContext): Either[String, ExpressionNode] =
+    parse(tokens, TokenType.Slash, _ => ASTDivisionValueOperationNode(), context)
+
+trait EqualExpressionNodeParser extends OptrExpressionNodeParser:
+  override def parse(tokens: PeekingIterator[Token])(using context: BasicLanguageFamilyParserContext): Either[String, ExpressionNode] =
+    parse(tokens, TokenType.Equal, _ => ASTEqualValueOperationNode(), context)
+
+trait LessThanExpressionNodeParser extends OptrExpressionNodeParser:
+  override def parse(tokens: PeekingIterator[Token])(using context: BasicLanguageFamilyParserContext): Either[String, ExpressionNode] =
+    parse(tokens, TokenType.LessThan, _ => ASTLessThanValueOperationNode(), context)
+
+trait GreaterThanExpressionNodeParser extends OptrExpressionNodeParser:
+  override def parse(tokens: PeekingIterator[Token])(using context: BasicLanguageFamilyParserContext): Either[String, ExpressionNode] =
+    parse(tokens, TokenType.GreaterThan, _ => ASTGreaterThanValueOperationNode(), context)
+
+trait PrintExpressionNodeParser extends OptrExpressionNodeParser:
+  override def parse(tokens: PeekingIterator[Token])(using context: BasicLanguageFamilyParserContext): Either[String, ExpressionNode] =
+    parse(tokens, TokenType.Print, _ => ASTPrintValueOperationNode(), context)
+
+trait FunctionCallExpressionNodeParser extends OptrExpressionNodeParser:
+  override def parse(tokens: PeekingIterator[Token])(using context: BasicLanguageFamilyParserContext): Either[String, ExpressionNode] =
+    parse(tokens, TokenType.Name, literal => ASTFunctionOperationNode(ASTFunctionNode(literal)), context)
