@@ -23,6 +23,113 @@ class ParserSpec extends AnyFunSpec
     }
   }
 
+  describe("A fun def node parser") {
+    it("should return a fun def node when presented with a valid function definition with multiple arguments") {
+      val expression = mock[ExpressionNode]
+      val results = Seq(Right(expression), Left("Failed due to many calls")).iterator
+      val context = new BasicLanguageFamilyParserContext {
+        override def parseExpression(tokens: PeekingIterator[Token]): Either[String, ExpressionNode] =
+          results.next()
+      }
+      val peekingIterator = PeekingIterator(Seq(
+        Token(TokenType.LeftParenthesis, "("), Token(TokenType.Define, "Define"), Token(TokenType.Name, "plus"),
+        Token(TokenType.LeftParenthesis, "("), Token(TokenType.Name, "x"), Token(TokenType.Name, "y"), Token(TokenType.RightParenthesis, ")"),
+        Token(TokenType.RightParenthesis, ")")
+      ).iterator)
+      val sut = new FunDefParser {}
+
+      sut.parse(peekingIterator)(using context) shouldBe Right(ASTFunDefNode(
+        ASTFunctionNode("plus"), Seq(ASTArgumentNode("x"), ASTArgumentNode("y")), expression))
+    }
+
+    it("should return a fun def node when presented with a valid function definition with a single argument") {
+      val expression = mock[ExpressionNode]
+      val results = Seq(Right(expression), Left("Failed due to many calls")).iterator
+      val context = new BasicLanguageFamilyParserContext {
+        override def parseExpression(tokens: PeekingIterator[Token]): Either[String, ExpressionNode] =
+          results.next()
+      }
+      val peekingIterator = PeekingIterator(Seq(
+        Token(TokenType.LeftParenthesis, "("), Token(TokenType.Define, "Define"), Token(TokenType.Name, "not"),
+        Token(TokenType.LeftParenthesis, "("), Token(TokenType.Name, "x"), Token(TokenType.RightParenthesis, ")"),
+        Token(TokenType.RightParenthesis, ")")
+      ).iterator)
+      val sut = new FunDefParser {}
+
+      sut.parse(peekingIterator)(using context) shouldBe Right(ASTFunDefNode(
+        ASTFunctionNode("not"), Seq(ASTArgumentNode("x")), expression))
+    }
+
+    it("should return a fun def node when presented with a valid function definition with no arguments") {
+      val expression = mock[ExpressionNode]
+      val results = Seq(Right(expression), Left("Failed due to many calls")).iterator
+      val context = new BasicLanguageFamilyParserContext {
+        override def parseExpression(tokens: PeekingIterator[Token]): Either[String, ExpressionNode] =
+          results.next()
+      }
+      val peekingIterator = PeekingIterator(Seq(
+        Token(TokenType.LeftParenthesis, "("), Token(TokenType.Define, "Define"), Token(TokenType.Name, "random"),
+        Token(TokenType.LeftParenthesis, "("), Token(TokenType.RightParenthesis, ")"),
+        Token(TokenType.RightParenthesis, ")")
+      ).iterator)
+      val sut = new FunDefParser {}
+
+      sut.parse(peekingIterator)(using context) shouldBe Right(ASTFunDefNode(
+        ASTFunctionNode("random"), Seq.empty, expression))
+    }
+
+    it("should return an error when presented with an fundef construction not closed") {
+      val expression = mock[ExpressionNode]
+      val results = Seq(Right(expression), Left("Failed due to many calls")).iterator
+      val context = new BasicLanguageFamilyParserContext {
+        override def parseExpression(tokens: PeekingIterator[Token]): Either[String, ExpressionNode] =
+          results.next()
+      }
+      val peekingIterator = PeekingIterator(Seq(
+        Token(TokenType.LeftParenthesis, "("), Token(TokenType.Define, "Define"), Token(TokenType.Name, "foo"),
+        Token(TokenType.LeftParenthesis, "("), Token(TokenType.RightParenthesis, ")")
+      ).iterator)
+      val sut = new FunDefParser {}
+
+      sut.parse(peekingIterator)(using context) shouldBe Left("Invalid end of program")
+    }
+
+    it("should return an error when presented with an fundef construction not parsing the expression correctly") {
+      val results = Seq(Left("Failed due to problem in expression"), Left("Failed due to many calls")).iterator
+      val context = new BasicLanguageFamilyParserContext {
+        override def parseExpression(tokens: PeekingIterator[Token]): Either[String, ExpressionNode] =
+          results.next()
+      }
+      val peekingIterator = PeekingIterator(Seq(
+        Token(TokenType.LeftParenthesis, "("), Token(TokenType.Define, "Define"), Token(TokenType.Name, "foo"),
+        Token(TokenType.LeftParenthesis, "("), Token(TokenType.RightParenthesis, ")"),
+        Token(TokenType.Plus, "+")
+      ).iterator)
+      val sut = new FunDefParser {}
+
+      sut.parse(peekingIterator)(using context) shouldBe Left("Failed due to problem in expression")
+    }
+
+    it("should return an error when presented with an fundef construction with invalid token as argument") {
+      val peekingIterator = PeekingIterator(Seq(
+        Token(TokenType.LeftParenthesis, "("), Token(TokenType.Define, "Define"), Token(TokenType.Name, "foo"),
+        Token(TokenType.LeftParenthesis, "("), Token(TokenType.Plus, "+"),
+      ).iterator)
+      val sut = new FunDefParser {}
+
+      sut.parse(peekingIterator)(using null) shouldBe Left("+ is an unexpected token")
+    }
+
+    it("should return an error when presented with an fundef construction with invalid token as name") {
+      val peekingIterator = PeekingIterator(Seq(
+        Token(TokenType.LeftParenthesis, "("), Token(TokenType.Define, "Define"), Token(TokenType.Minus, "-")
+      ).iterator)
+      val sut = new FunDefParser {}
+
+      sut.parse(peekingIterator)(using null) shouldBe Left("- is an unexpected token")
+    }
+  }
+
   describe("An integer value expression node parser") {
     it("should return a value node expression when presented with a valid integer") {
       val peekingIterator = PeekingIterator(Seq(Token(TokenType.Integer, "96575")).iterator)
@@ -349,7 +456,7 @@ class ParserSpec extends AnyFunSpec
       sut.parse(peekingIterator)(using context) shouldBe Right(ASTBeginExpressionNode(List(expression)))
     }
 
-    it("should return an unexpected token with a begin construction and no expressions") {
+    it("should return a No expressions found with a begin construction and no expressions") {
       val results = Seq().iterator
       val context = new BasicLanguageFamilyParserContext {
         override def parseExpression(tokens: PeekingIterator[Token]): Either[String, ExpressionNode] =
@@ -361,7 +468,7 @@ class ParserSpec extends AnyFunSpec
       ).iterator)
       val sut = new BeginExpressionNodeParser {}
 
-      sut.parse(peekingIterator)(using context) shouldBe Left(") is an unexpected token")
+      sut.parse(peekingIterator)(using context) shouldBe Left("No expressions found")
     }
 
     it("should return the error when an expression fails") {

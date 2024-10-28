@@ -6,6 +6,10 @@ sealed trait FunctionNode extends Node
 
 case class ASTFunctionNode(name: String) extends FunctionNode
 
+sealed trait ArgumentNode extends Node
+
+case class ASTArgumentNode(name: String) extends ArgumentNode
+
 sealed trait ValueNode extends Node
 
 case class ASTIntegerValueNode(value: Int) extends ValueNode
@@ -19,7 +23,7 @@ trait InputNode extends Node
 sealed trait FunDefNode extends InputNode:
   def function: FunctionNode
 
-case class ASTFunDefNode(function: FunctionNode, arglist: Seq[String], expression: ExpressionNode)
+case class ASTFunDefNode(function: FunctionNode, arguments: Seq[ArgumentNode], expression: ExpressionNode)
   extends FunDefNode
 
 sealed trait ExpressionNode extends InputNode
