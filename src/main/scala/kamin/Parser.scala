@@ -45,6 +45,7 @@ trait Parser[ResultType <: Node, ParserContextType <: ParserContext]:
     }
 
   def parse(tokens: PeekingIterator[Token])(using context: ParserContextType): Either[String, ResultType] =
+    println(getClass.getSimpleName)
     if tokens.hasNext then
       invalidToken(tokens.next())
     else
@@ -56,8 +57,9 @@ trait Parser[ResultType <: Node, ParserContextType <: ParserContext]:
   protected def invalidEndOfProgram: Either[String, Nothing] =
     Left("Invalid end of program")
 
-trait FunDefParser extends Parser[FunDefNode, BasicLanguageFamilyParserContext]:
+trait FunDefNodeParser extends Parser[FunDefNode, BasicLanguageFamilyParserContext]:
   override def parse(tokens: PeekingIterator[Token])(using context: BasicLanguageFamilyParserContext): Either[String, FunDefNode] =
+    println(getClass.getSimpleName)
     checkTokensForPresence(tokens, LeftParenthesis, TokenType.Define) match
       case Left(_) => super.parse(tokens) // Handle fallback case directly
       case Right(_) =>
@@ -96,6 +98,7 @@ trait FunDefParser extends Parser[FunDefNode, BasicLanguageFamilyParserContext]:
 
 trait IntegerValueExpressionNodeParser extends Parser[ExpressionNode, BasicLanguageFamilyParserContext]:
   override def parse(tokens: PeekingIterator[Token])(using context: BasicLanguageFamilyParserContext): Either[String, ExpressionNode] =
+    println(getClass.getSimpleName)
     checkTokensForPresence(tokens, TokenType.Integer) match
       case Right(Seq(value)) =>
         tokens.consumeTokens(1)
@@ -105,6 +108,7 @@ trait IntegerValueExpressionNodeParser extends Parser[ExpressionNode, BasicLangu
 
 trait VariableExpressionNodeParser extends Parser[ExpressionNode, BasicLanguageFamilyParserContext]:
   override def parse(tokens: PeekingIterator[Token])(using context: BasicLanguageFamilyParserContext): Either[String, ExpressionNode] =
+    println(getClass.getSimpleName)
     checkTokensForPresence(tokens, TokenType.Name) match
       case Right(Seq(value)) =>
         tokens.consumeTokens(1)
@@ -113,6 +117,7 @@ trait VariableExpressionNodeParser extends Parser[ExpressionNode, BasicLanguageF
 
 trait IfExpressionNodeParser extends Parser[ExpressionNode, BasicLanguageFamilyParserContext]:
   override def parse(tokens: PeekingIterator[Token])(using context: BasicLanguageFamilyParserContext): Either[String, ExpressionNode] =
+    println(getClass.getSimpleName)
     for
       _ <- checkTokensForPresence(tokens, TokenType.LeftParenthesis, TokenType.If)
       _ = tokens.consumeTokens(2) // Skip '(' and 'if'
@@ -128,6 +133,7 @@ trait IfExpressionNodeParser extends Parser[ExpressionNode, BasicLanguageFamilyP
 
 trait WhileExpressionNodeParser extends Parser[ExpressionNode, BasicLanguageFamilyParserContext]:
   override def parse(tokens: PeekingIterator[Token])(using context: BasicLanguageFamilyParserContext): Either[String, ExpressionNode] =
+    println(getClass.getSimpleName)
     for
       _ <- checkTokensForPresence(tokens, TokenType.LeftParenthesis, TokenType.While)
       _ = tokens.consumeTokens(2) // Skip '(' and 'while'
@@ -141,6 +147,7 @@ trait WhileExpressionNodeParser extends Parser[ExpressionNode, BasicLanguageFami
 
 trait SetExpressionNodeParser extends Parser[ExpressionNode, BasicLanguageFamilyParserContext]:
   override def parse(tokens: PeekingIterator[Token])(using context: BasicLanguageFamilyParserContext): Either[String, ExpressionNode] =
+    println(getClass.getSimpleName)
     for
       _ <- checkTokensForPresence(tokens, TokenType.LeftParenthesis, TokenType.Set)
       _ = tokens.consumeTokens(2)
@@ -155,6 +162,7 @@ trait SetExpressionNodeParser extends Parser[ExpressionNode, BasicLanguageFamily
 
 trait BeginExpressionNodeParser extends Parser[ExpressionNode, BasicLanguageFamilyParserContext]:
   override def parse(tokens: PeekingIterator[Token])(using context: BasicLanguageFamilyParserContext): Either[String, ExpressionNode] =
+    println(getClass.getSimpleName)
     for
       _           <- checkTokensForPresence(tokens, TokenType.LeftParenthesis, TokenType.Begin)
       _           = tokens.consumeTokens(2)
@@ -165,6 +173,7 @@ trait BeginExpressionNodeParser extends Parser[ExpressionNode, BasicLanguageFami
 
 trait OptrExpressionNodeParser extends Parser[ExpressionNode, BasicLanguageFamilyParserContext]:
   protected def parse(tokens: PeekingIterator[Token], expectedOptrTokenType: TokenType, optrNodeProducer: String => OptrNode, context: BasicLanguageFamilyParserContext): Either[String, ExpressionNode] =
+    println(getClass.getSimpleName)
     checkTokensForPresence(tokens, TokenType.LeftParenthesis, expectedOptrTokenType) match
       case Left(_) => super.parse(tokens)(using context)
       case Right(Seq(Token(LeftParenthesis, _), Token(expectedOptrTokenType, literal))) =>
@@ -178,36 +187,45 @@ trait OptrExpressionNodeParser extends Parser[ExpressionNode, BasicLanguageFamil
 
 trait PlusExpressionNodeParser extends OptrExpressionNodeParser:
   override def parse(tokens: PeekingIterator[Token])(using context: BasicLanguageFamilyParserContext): Either[String, ExpressionNode] =
+    println(getClass.getSimpleName)
     parse(tokens, TokenType.Plus, _ => ASTPlusValueOperationNode(), context)
 
 trait MinusExpressionNodeParser extends OptrExpressionNodeParser:
   override def parse(tokens: PeekingIterator[Token])(using context: BasicLanguageFamilyParserContext): Either[String, ExpressionNode] =
+    println(getClass.getSimpleName)
     parse(tokens, TokenType.Minus, _ => ASTMinusValueOperationNode(), context)
 
 trait MultiplicationExpressionNodeParser extends OptrExpressionNodeParser:
   override def parse(tokens: PeekingIterator[Token])(using context: BasicLanguageFamilyParserContext): Either[String, ExpressionNode] =
+    println(getClass.getSimpleName)
     parse(tokens, TokenType.Asteriks, _ =>ASTMultiplicationValueOperationNode(), context)
 
 trait DivisionExpressionNodeParser extends OptrExpressionNodeParser:
   override def parse(tokens: PeekingIterator[Token])(using context: BasicLanguageFamilyParserContext): Either[String, ExpressionNode] =
+    println(getClass.getSimpleName)
     parse(tokens, TokenType.Slash, _ => ASTDivisionValueOperationNode(), context)
 
 trait EqualExpressionNodeParser extends OptrExpressionNodeParser:
   override def parse(tokens: PeekingIterator[Token])(using context: BasicLanguageFamilyParserContext): Either[String, ExpressionNode] =
+    println(getClass.getSimpleName)
     parse(tokens, TokenType.Equal, _ => ASTEqualValueOperationNode(), context)
 
 trait LessThanExpressionNodeParser extends OptrExpressionNodeParser:
   override def parse(tokens: PeekingIterator[Token])(using context: BasicLanguageFamilyParserContext): Either[String, ExpressionNode] =
+    println(getClass.getSimpleName)
     parse(tokens, TokenType.LessThan, _ => ASTLessThanValueOperationNode(), context)
 
 trait GreaterThanExpressionNodeParser extends OptrExpressionNodeParser:
   override def parse(tokens: PeekingIterator[Token])(using context: BasicLanguageFamilyParserContext): Either[String, ExpressionNode] =
+    println(getClass.getSimpleName)
     parse(tokens, TokenType.GreaterThan, _ => ASTGreaterThanValueOperationNode(), context)
 
 trait PrintExpressionNodeParser extends OptrExpressionNodeParser:
   override def parse(tokens: PeekingIterator[Token])(using context: BasicLanguageFamilyParserContext): Either[String, ExpressionNode] =
+    println(getClass.getSimpleName)
     parse(tokens, TokenType.Print, _ => ASTPrintValueOperationNode(), context)
 
 trait FunctionCallExpressionNodeParser extends OptrExpressionNodeParser:
   override def parse(tokens: PeekingIterator[Token])(using context: BasicLanguageFamilyParserContext): Either[String, ExpressionNode] =
+    println(getClass.getSimpleName)
     parse(tokens, TokenType.Name, literal => ASTFunctionOperationNode(ASTFunctionNode(literal)), context)

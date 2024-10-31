@@ -36,7 +36,7 @@ class ParserSpec extends AnyFunSpec
         Token(TokenType.LeftParenthesis, "("), Token(TokenType.Name, "x"), Token(TokenType.Name, "y"), Token(TokenType.RightParenthesis, ")"),
         Token(TokenType.RightParenthesis, ")")
       ).iterator)
-      val sut = new FunDefParser {}
+      val sut = new FunDefNodeParser {}
 
       sut.parse(peekingIterator)(using context) shouldBe Right(ASTFunDefNode(
         ASTFunctionNode("plus"), Seq(ASTArgumentNode("x"), ASTArgumentNode("y")), expression))
@@ -54,7 +54,7 @@ class ParserSpec extends AnyFunSpec
         Token(TokenType.LeftParenthesis, "("), Token(TokenType.Name, "x"), Token(TokenType.RightParenthesis, ")"),
         Token(TokenType.RightParenthesis, ")")
       ).iterator)
-      val sut = new FunDefParser {}
+      val sut = new FunDefNodeParser {}
 
       sut.parse(peekingIterator)(using context) shouldBe Right(ASTFunDefNode(
         ASTFunctionNode("not"), Seq(ASTArgumentNode("x")), expression))
@@ -72,7 +72,7 @@ class ParserSpec extends AnyFunSpec
         Token(TokenType.LeftParenthesis, "("), Token(TokenType.RightParenthesis, ")"),
         Token(TokenType.RightParenthesis, ")")
       ).iterator)
-      val sut = new FunDefParser {}
+      val sut = new FunDefNodeParser {}
 
       sut.parse(peekingIterator)(using context) shouldBe Right(ASTFunDefNode(
         ASTFunctionNode("random"), Seq.empty, expression))
@@ -89,7 +89,7 @@ class ParserSpec extends AnyFunSpec
         Token(TokenType.LeftParenthesis, "("), Token(TokenType.Define, "Define"), Token(TokenType.Name, "foo"),
         Token(TokenType.LeftParenthesis, "("), Token(TokenType.RightParenthesis, ")")
       ).iterator)
-      val sut = new FunDefParser {}
+      val sut = new FunDefNodeParser {}
 
       sut.parse(peekingIterator)(using context) shouldBe Left("Invalid end of program")
     }
@@ -105,7 +105,7 @@ class ParserSpec extends AnyFunSpec
         Token(TokenType.LeftParenthesis, "("), Token(TokenType.RightParenthesis, ")"),
         Token(TokenType.Plus, "+")
       ).iterator)
-      val sut = new FunDefParser {}
+      val sut = new FunDefNodeParser {}
 
       sut.parse(peekingIterator)(using context) shouldBe Left("Failed due to problem in expression")
     }
@@ -115,7 +115,7 @@ class ParserSpec extends AnyFunSpec
         Token(TokenType.LeftParenthesis, "("), Token(TokenType.Define, "Define"), Token(TokenType.Name, "foo"),
         Token(TokenType.LeftParenthesis, "("), Token(TokenType.Plus, "+"),
       ).iterator)
-      val sut = new FunDefParser {}
+      val sut = new FunDefNodeParser {}
 
       sut.parse(peekingIterator)(using null) shouldBe Left("+ is an unexpected token")
     }
@@ -124,7 +124,7 @@ class ParserSpec extends AnyFunSpec
       val peekingIterator = PeekingIterator(Seq(
         Token(TokenType.LeftParenthesis, "("), Token(TokenType.Define, "Define"), Token(TokenType.Minus, "-")
       ).iterator)
-      val sut = new FunDefParser {}
+      val sut = new FunDefNodeParser {}
 
       sut.parse(peekingIterator)(using null) shouldBe Left("- is an unexpected token")
     }
