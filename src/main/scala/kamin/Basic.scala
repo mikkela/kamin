@@ -4,6 +4,9 @@ import kamin.TokenType.{Define, If, LeftParenthesis, Name, RightParenthesis, Whi
 
 object BasicTokenizer extends Tokenizer
   with IntegerTokenizer with NameTokenizer:
+  override inline def isSeparator(c: Char): Boolean =
+    c == '(' || c == ')'
+
   def toToken(s: String): Token =
     s match
       case "(" => Token(TokenType.LeftParenthesis, "(")

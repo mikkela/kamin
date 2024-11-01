@@ -19,6 +19,7 @@ trait NameTokenizer {
 
 trait Tokenizer:
   def toToken(s: String): Token
+  def isSeparator(c: Char): Boolean
 
 class Lexer(using tokenizer: Tokenizer):
   def tokens(input: String):Iterator[Token] =
@@ -31,16 +32,16 @@ class Lexer(using tokenizer: Tokenizer):
       if position + 1 < input.length then input(position + 1) else '\u0000'
 
     def isSeparator(c: Char): Boolean =
-      c == '\u0000' || c.isWhitespace || c == '(' || c == ')'
+      c == '\u0000' || c.isWhitespace || tokenizer.isSeparator(c)
 
     def advance(): Unit = position += 1
 
-    def isEndOfLine() : Boolean =
+    def isEndOfLine: Boolean =
       position >= input.length
 
     def skipComments(): Unit =
       if currentChar == ';' then
-        while !isEndOfLine() && currentChar != '\n' && currentChar != '\r' do advance()
+        while !isEndOfLine && currentChar != '\n' && currentChar != '\r' do advance()
         skipWhitespaces()
 
     def skipWhitespaces(): Unit =
@@ -56,17 +57,14 @@ class Lexer(using tokenizer: Tokenizer):
       override def hasNext: Boolean =
         skipWhitespaces()
         skipComments()
-        !isEndOfLine()
+        !isEndOfLine
 
       override def next(): Token =
         skipWhitespaces()
         skipComments()
 
         currentChar match
-          case '(' =>
+          case c if tokenizer.isSeparator(c) =>
             advance()
-            tokenizer.toToken("(")
-          case ')' =>
-            advance()
-            tokenizer.toToken(")")
+            tokenizer.toToken(c.toString)
           case _ => lexToken()

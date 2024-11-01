@@ -8,7 +8,9 @@ class LexerSpec extends AnyFunSpec {
   describe("tokens method") {
     it("should ignore whitespaces so '     ' should be empty") {
       val lexer = Lexer(using
-        (s: String) => ???
+        new Tokenizer:
+          override def toToken(s: String): Token = ???
+          override def isSeparator(c: Char): Boolean = false
       )
 
       val it = lexer.tokens("     ")
@@ -16,8 +18,10 @@ class LexerSpec extends AnyFunSpec {
     }
 
     it("should treat single parts of text as a token") {
-      val lexer = Lexer(using 
-        (s: String) => Token(TokenType.Name, s)
+      val lexer = Lexer(using
+        new Tokenizer:
+          override def toToken(s: String): Token = Token(TokenType.Name, s)
+          override def isSeparator(c: Char): Boolean = false
       )
 
       val it = lexer.tokens("token")
@@ -27,8 +31,10 @@ class LexerSpec extends AnyFunSpec {
     }
 
     it("should treat left parenthesis as a separator between tokens") {
-      val lexer = Lexer(using 
-        (s: String) => Token(TokenType.Name, s)
+      val lexer = Lexer(using
+        new Tokenizer:
+          override def toToken(s: String): Token = Token(TokenType.Name, s)
+          override def isSeparator(c: Char): Boolean = c == '('
       )
 
       val it = lexer.tokens("token1(token2")
@@ -44,8 +50,10 @@ class LexerSpec extends AnyFunSpec {
     }
 
     it("should treat right parenthesis as a separator between tokens") {
-      val lexer = Lexer(using 
-        (s: String) => Token(TokenType.Name, s)
+      val lexer = Lexer(using
+        new Tokenizer:
+          override def toToken(s: String): Token = Token(TokenType.Name, s)
+          override def isSeparator(c: Char): Boolean = c == ')'
       )
 
       val it = lexer.tokens("token3)token4")
@@ -61,8 +69,10 @@ class LexerSpec extends AnyFunSpec {
     }
 
     it("should treat space as a separator between tokens") {
-      val lexer = Lexer(using 
-        (s: String) => Token(TokenType.Name, s)
+      val lexer = Lexer(using
+        new Tokenizer:
+          override def toToken(s: String): Token = Token(TokenType.Name, s)
+          override def isSeparator(c: Char): Boolean = false
       )
 
       val it = lexer.tokens("token5 token6")
@@ -75,8 +85,10 @@ class LexerSpec extends AnyFunSpec {
     }
 
     it("should treat tab as a separator between tokens") {
-      val lexer = Lexer(using 
-        (s: String) => Token(TokenType.Name, s)
+      val lexer = Lexer(using
+        new Tokenizer:
+          override def toToken(s: String): Token = Token(TokenType.Name, s)
+          override def isSeparator(c: Char): Boolean = false
       )
 
       val it = lexer.tokens("443\t-5676")
@@ -89,8 +101,10 @@ class LexerSpec extends AnyFunSpec {
     }
 
     it("should treat return as a separator between tokens") {
-      val lexer = Lexer(using 
-        (s: String) => Token(TokenType.Name, s)
+      val lexer = Lexer(using
+        new Tokenizer:
+          override def toToken(s: String): Token = Token(TokenType.Name, s)
+          override def isSeparator(c: Char): Boolean = false
       )
 
       val it = lexer.tokens("token9\rtoken0")
@@ -103,8 +117,10 @@ class LexerSpec extends AnyFunSpec {
     }
 
     it("should treat newline as a separator between tokens") {
-      val lexer = Lexer(using 
-        (s: String) => Token(TokenType.Name, s)
+      val lexer = Lexer(using
+        new Tokenizer:
+          override def toToken(s: String): Token = Token(TokenType.Name, s)
+          override def isSeparator(c: Char): Boolean = false
       )
 
       val it = lexer.tokens("TokenA\nTokenB")
@@ -118,7 +134,9 @@ class LexerSpec extends AnyFunSpec {
 
     it("should ignore comments until the end of line ';this is a comment' should be empty") {
       val lexer = Lexer(using
-        (s: String) => ???
+        new Tokenizer:
+          override def toToken(s: String): Token = ???
+          override def isSeparator(c: Char): Boolean = false
       )
 
       val it = lexer.tokens(";this is a comment")
@@ -126,8 +144,10 @@ class LexerSpec extends AnyFunSpec {
     }
 
     it("should ignore comments so ';this is a comment\nx' should be the text x") {
-      val lexer = Lexer(using 
-        (s: String) => Token(TokenType.Name, s)
+      val lexer = Lexer(using
+        new Tokenizer:
+          override def toToken(s: String): Token = Token(TokenType.Name, s)
+          override def isSeparator(c: Char): Boolean = false
       )
 
       val it = lexer.tokens(";this is a comment\nx")
