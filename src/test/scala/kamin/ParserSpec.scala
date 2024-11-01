@@ -425,15 +425,17 @@ class ParserSpec extends AnyFunSpec
       val expression2 = mock[ExpressionNode]
       val expression3 = mock[ExpressionNode]
       val results = Seq(Right(expression1), Right(expression2), Right(expression3)).iterator
-      val context = new BasicLanguageFamilyParserContext {
-        override def parseExpression(tokens: PeekingIterator[Token]): Either[String, ExpressionNode] =
-          results.next()
-      }
       val peekingIterator = PeekingIterator(Seq(
         Token(TokenType.LeftParenthesis, "("), Token(TokenType.Begin, "BEGIN"),
         Token(TokenType.Name, "eaten"), Token(TokenType.Name, "eaten"), Token(TokenType.Name, "eaten"),
         Token(TokenType.RightParenthesis, ")")
       ).iterator)
+      val context = new BasicLanguageFamilyParserContext {
+        override def parseExpression(tokens: PeekingIterator[Token]): Either[String, ExpressionNode] =
+          peekingIterator.consumeTokens(1)
+          results.next()
+      }
+
       val sut = new BeginExpressionNodeParser {}
 
       sut.parse(peekingIterator)(using context) shouldBe Right(ASTBeginExpressionNode(List(expression1, expression2, expression3)))
@@ -442,15 +444,17 @@ class ParserSpec extends AnyFunSpec
     it("should return a begin expression node expression when presented with a valid begin construction and single expression") {
       val expression = mock[ExpressionNode]
       val results = Seq(Right(expression)).iterator
-      val context = new BasicLanguageFamilyParserContext {
-        override def parseExpression(tokens: PeekingIterator[Token]): Either[String, ExpressionNode] =
-          results.next()
-      }
       val peekingIterator = PeekingIterator(Seq(
         Token(TokenType.LeftParenthesis, "("), Token(TokenType.Begin, "BEGIN"),
         Token(TokenType.Name, "eaten"),
         Token(TokenType.RightParenthesis, ")")
       ).iterator)
+      val context = new BasicLanguageFamilyParserContext {
+        override def parseExpression(tokens: PeekingIterator[Token]): Either[String, ExpressionNode] =
+          peekingIterator.consumeTokens(1)
+          results.next()
+      }
+
       val sut = new BeginExpressionNodeParser {}
 
       sut.parse(peekingIterator)(using context) shouldBe Right(ASTBeginExpressionNode(List(expression)))
@@ -468,7 +472,7 @@ class ParserSpec extends AnyFunSpec
       ).iterator)
       val sut = new BeginExpressionNodeParser {}
 
-      sut.parse(peekingIterator)(using context) shouldBe Left("No expressions found")
+      sut.parse(peekingIterator)(using context) shouldBe Left(") is an unexpected token")
     }
 
     it("should return the error when an expression fails") {
@@ -510,16 +514,18 @@ class ParserSpec extends AnyFunSpec
       forAll(optrTable) {
         (parser, token, optrValueNode) =>
           val results = Seq(Right(expression1), Right(expression2), Right(expression3)).iterator
-          val context = new BasicLanguageFamilyParserContext {
-            override def parseExpression(tokens: PeekingIterator[Token]): Either[String, ExpressionNode] =
-              results.next()
-          }
-
           val peekingIterator = PeekingIterator(Seq(
             Token(TokenType.LeftParenthesis, "("), token,
             Token(TokenType.Name, "eaten"), Token(TokenType.Name, "eaten"), Token(TokenType.Name, "eaten"),
             Token(TokenType.RightParenthesis, ")")
           ).iterator)
+          val context = new BasicLanguageFamilyParserContext {
+            override def parseExpression(tokens: PeekingIterator[Token]): Either[String, ExpressionNode] =
+              peekingIterator.consumeTokens(1)
+              results.next()
+          }
+
+
 
           val sut = parser
 
@@ -533,16 +539,16 @@ class ParserSpec extends AnyFunSpec
       forAll(optrTable) {
         (parser, token, optrValueNode) =>
           val results = Seq(Right(expression)).iterator
-          val context = new BasicLanguageFamilyParserContext {
-            override def parseExpression(tokens: PeekingIterator[Token]): Either[String, ExpressionNode] =
-              results.next()
-          }
-
           val peekingIterator = PeekingIterator(Seq(
             Token(TokenType.LeftParenthesis, "("), token,
             Token(TokenType.Name, "eaten"),
             Token(TokenType.RightParenthesis, ")")
           ).iterator)
+          val context = new BasicLanguageFamilyParserContext {
+            override def parseExpression(tokens: PeekingIterator[Token]): Either[String, ExpressionNode] =
+              peekingIterator.consumeTokens(1)
+              results.next()
+          }
 
           val sut = parser
 
@@ -574,16 +580,16 @@ class ParserSpec extends AnyFunSpec
       forAll(optrTable) {
         (parser, token, optrValueNode) =>
           val results = Seq(Right(mock[ExpressionNode]), Left("Something went wrong in parsing"), Right(mock[ExpressionNode])).iterator
-          val context = new BasicLanguageFamilyParserContext {
-            override def parseExpression(tokens: PeekingIterator[Token]): Either[String, ExpressionNode] =
-              results.next()
-          }
-
           val peekingIterator = PeekingIterator(Seq(
             Token(TokenType.LeftParenthesis, "("), token,
             Token(TokenType.Name, "eaten"), Token(TokenType.Name, "eaten"),
             Token(TokenType.RightParenthesis, ")")
           ).iterator)
+          val context = new BasicLanguageFamilyParserContext {
+            override def parseExpression(tokens: PeekingIterator[Token]): Either[String, ExpressionNode] =
+              peekingIterator.consumeTokens(1)
+              results.next()
+          }
 
           val sut = parser
 
