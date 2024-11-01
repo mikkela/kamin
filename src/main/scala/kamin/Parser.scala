@@ -33,7 +33,7 @@ private def checkTokensForPresence(tokens: PeekingIterator[Token], expected: Tok
 private def parseListOfElements[ElementType <: Node](tokens: PeekingIterator[Token], elementParser: PeekingIterator[Token] => Either[String, ElementType]): Either[String, Seq[ElementType]] =
   var list = List.empty[ElementType]
   var peek = tokens.peek(1)
-  while (peek.nonEmpty && peek(0).tokenType != RightParenthesis)
+  while (peek.nonEmpty && peek.head.tokenType != RightParenthesis)
     elementParser(tokens) match
       case Left(value) => return Left(value)
       case Right(element) =>
@@ -56,7 +56,7 @@ trait Parser[ResultType <: Node, ParserContextType <: ParserContext]:
     if peeking.isEmpty then
       invalidEndOfProgram
     else
-      invalidToken(peeking(0))
+      invalidToken(peeking.head)
 
 
 
@@ -175,7 +175,7 @@ trait BeginExpressionNodeParser extends Parser[ExpressionNode, BasicLanguageFami
         tokens.consumeTokens(2)
         parseListOfElements(tokens, context.parseExpression) match
           case Left(value) => Left(value)
-          case Right(expressions) if expressions.length > 0 =>
+          case Right(expressions) if expressions.nonEmpty =>
             checkTokensForPresence(tokens, TokenType.RightParenthesis) match
               case Left(value) => Left(value)
               case Right(_) => Right(ASTBeginExpressionNode(expressions))
@@ -185,7 +185,7 @@ trait BeginExpressionNodeParser extends Parser[ExpressionNode, BasicLanguageFami
               case _ => invalidEndOfProgram
       case _ => super.parse(tokens)
 
-def parseOperator(tokens: PeekingIterator[Token], expectedOptrTokenType: TokenType, context: BasicLanguageFamilyParserContext, optrNodeProducer: String => OptrNode, continueChain: (PeekingIterator[Token]) => Either[String, ExpressionNode]): Either[String, ExpressionNode] =
+def parseOperator(tokens: PeekingIterator[Token], expectedOptrTokenType: TokenType, context: BasicLanguageFamilyParserContext, optrNodeProducer: String => OptrNode, continueChain: PeekingIterator[Token] => Either[String, ExpressionNode]): Either[String, ExpressionNode] =
   checkTokensForPresence(tokens, TokenType.LeftParenthesis, expectedOptrTokenType) match
     case Left(_) => continueChain(tokens)
     case Right(Seq(Token(LeftParenthesis, _), Token(expectedOptrTokenType, literal))) =>
