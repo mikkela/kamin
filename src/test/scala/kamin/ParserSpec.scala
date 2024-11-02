@@ -38,8 +38,8 @@ class ParserSpec extends AnyFunSpec
       ).iterator)
       val sut = new FunDefNodeParser {}
 
-      sut.parse(peekingIterator)(using context) shouldBe Right(ASTFunDefNode(
-        ASTFunctionNode("plus"), Seq(ASTArgumentNode("x"), ASTArgumentNode("y")), expression))
+      sut.parse(peekingIterator)(using context) shouldBe Right(FunDefNode(
+        FunctionNode("plus"), Seq(ArgumentNode("x"), ArgumentNode("y")), expression))
     }
 
     it("should return a fun def node when presented with a valid function definition with a single argument") {
@@ -56,8 +56,8 @@ class ParserSpec extends AnyFunSpec
       ).iterator)
       val sut = new FunDefNodeParser {}
 
-      sut.parse(peekingIterator)(using context) shouldBe Right(ASTFunDefNode(
-        ASTFunctionNode("not"), Seq(ASTArgumentNode("x")), expression))
+      sut.parse(peekingIterator)(using context) shouldBe Right(FunDefNode(
+        FunctionNode("not"), Seq(ArgumentNode("x")), expression))
     }
 
     it("should return a fun def node when presented with a valid function definition with no arguments") {
@@ -74,8 +74,8 @@ class ParserSpec extends AnyFunSpec
       ).iterator)
       val sut = new FunDefNodeParser {}
 
-      sut.parse(peekingIterator)(using context) shouldBe Right(ASTFunDefNode(
-        ASTFunctionNode("random"), Seq.empty, expression))
+      sut.parse(peekingIterator)(using context) shouldBe Right(FunDefNode(
+        FunctionNode("random"), Seq.empty, expression))
     }
 
     it("should return an error when presented with an fundef construction not closed") {
@@ -135,7 +135,7 @@ class ParserSpec extends AnyFunSpec
       val peekingIterator = PeekingIterator(Seq(Token(TokenType.Integer, "96575")).iterator)
       val sut = new IntegerValueExpressionNodeParser {}
 
-      sut.parse(peekingIterator)(using context = null) shouldBe Right(ASTValueExpressionNode(ASTIntegerValueNode(96575)))
+      sut.parse(peekingIterator)(using context = null) shouldBe Right(ValueExpressionNode(IntegerValueNode(96575)))
     }
 
     it("should return an error when presented with a non-integer") {
@@ -152,7 +152,7 @@ class ParserSpec extends AnyFunSpec
 
       val sut = new VariableExpressionNodeParser {}
 
-      sut.parse(peekingIterator)(using context = null) shouldBe Right(ASTVariableExpressionNode(ASTVariableNode("myFoo")))
+      sut.parse(peekingIterator)(using context = null) shouldBe Right(VariableExpressionNode(VariableNode("myFoo")))
     }
 
     it("should return an error when presented with an invalid name") {
@@ -179,7 +179,7 @@ class ParserSpec extends AnyFunSpec
       ).iterator)
       val sut = new IfExpressionNodeParser {}
 
-      sut.parse(peekingIterator)(using context) shouldBe Right(ASTIfExpressionNode(testExpression, consequenceExpression, alternativeExpression))
+      sut.parse(peekingIterator)(using context) shouldBe Right(IfExpressionNode(testExpression, consequenceExpression, alternativeExpression))
     }
 
     it("should return an error when presented with an if construction not closed") {
@@ -277,7 +277,7 @@ class ParserSpec extends AnyFunSpec
       ).iterator)
       val sut = new WhileExpressionNodeParser {}
 
-      sut.parse(peekingIterator)(using context) shouldBe Right(ASTWhileExpressionNode(testExpression, bodyExpression))
+      sut.parse(peekingIterator)(using context) shouldBe Right(WhileExpressionNode(testExpression, bodyExpression))
     }
 
     it("should return an error when presented with an while construction not closed") {
@@ -357,7 +357,7 @@ class ParserSpec extends AnyFunSpec
       ).iterator)
       val sut = new SetExpressionNodeParser {}
 
-      sut.parse(peekingIterator)(using context) shouldBe Right(ASTSetExpressionNode(ASTVariableNode("foo"), valueExpression))
+      sut.parse(peekingIterator)(using context) shouldBe Right(SetExpressionNode(VariableNode("foo"), valueExpression))
     }
 
     it("should return an error when presented with a set construction not closed") {
@@ -438,7 +438,7 @@ class ParserSpec extends AnyFunSpec
 
       val sut = new BeginExpressionNodeParser {}
 
-      sut.parse(peekingIterator)(using context) shouldBe Right(ASTBeginExpressionNode(List(expression1, expression2, expression3)))
+      sut.parse(peekingIterator)(using context) shouldBe Right(BeginExpressionNode(List(expression1, expression2, expression3)))
     }
 
     it("should return a begin expression node expression when presented with a valid begin construction and single expression") {
@@ -457,7 +457,7 @@ class ParserSpec extends AnyFunSpec
 
       val sut = new BeginExpressionNodeParser {}
 
-      sut.parse(peekingIterator)(using context) shouldBe Right(ASTBeginExpressionNode(List(expression)))
+      sut.parse(peekingIterator)(using context) shouldBe Right(BeginExpressionNode(List(expression)))
     }
 
     it("should return a No expressions found with a begin construction and no expressions") {
@@ -494,15 +494,15 @@ class ParserSpec extends AnyFunSpec
 
   private val optrTable = Table(
     ("Parser", "Token", "Expected Optr Value Node"),
-    (new PlusExpressionNodeParser{}, Token(TokenType.Plus, "OPERAND"), ASTPlusValueOperationNode()),
-    (new MinusExpressionNodeParser{}, Token(TokenType.Minus, "OPERAND"), ASTMinusValueOperationNode()),
-    (new MultiplicationExpressionNodeParser{}, Token(TokenType.Asteriks, "OPERAND"), ASTMultiplicationValueOperationNode()),
-    (new DivisionExpressionNodeParser {}, Token(TokenType.Slash, "OPERAND"), ASTDivisionValueOperationNode()),
-    (new EqualExpressionNodeParser{}, Token(TokenType.Equal, "OPERAND"), ASTEqualValueOperationNode()),
-    (new LessThanExpressionNodeParser{}, Token(TokenType.LessThan, "OPERAND"), ASTLessThanValueOperationNode()),
-    (new GreaterThanExpressionNodeParser{}, Token(TokenType.GreaterThan, "OPERAND"), ASTGreaterThanValueOperationNode()),
-    (new PrintExpressionNodeParser{}, Token(TokenType.Print, "OPERAND"), ASTPrintValueOperationNode()),
-    (new FunctionCallExpressionNodeParser{}, Token(TokenType.Name, "foo"), ASTFunctionOperationNode(kamin.ASTFunctionNode("foo")))
+    (new PlusExpressionNodeParser{}, Token(TokenType.Plus, "OPERAND"), PlusValueOperationNode()),
+    (new MinusExpressionNodeParser{}, Token(TokenType.Minus, "OPERAND"), MinusValueOperationNode()),
+    (new MultiplicationExpressionNodeParser{}, Token(TokenType.Asteriks, "OPERAND"), MultiplicationValueOperationNode()),
+    (new DivisionExpressionNodeParser {}, Token(TokenType.Slash, "OPERAND"), DivisionValueOperationNode()),
+    (new EqualExpressionNodeParser{}, Token(TokenType.Equal, "OPERAND"), EqualValueOperationNode()),
+    (new LessThanExpressionNodeParser{}, Token(TokenType.LessThan, "OPERAND"), LessThanValueOperationNode()),
+    (new GreaterThanExpressionNodeParser{}, Token(TokenType.GreaterThan, "OPERAND"), GreaterThanValueOperationNode()),
+    (new PrintExpressionNodeParser{}, Token(TokenType.Print, "OPERAND"), PrintValueOperationNode()),
+    (new FunctionCallExpressionNodeParser{}, Token(TokenType.Name, "foo"), FunctionOperationNode(kamin.FunctionNode("foo")))
   )
 
   describe("Optr expression node parsers") {
@@ -529,7 +529,7 @@ class ParserSpec extends AnyFunSpec
 
           val sut = parser
 
-          sut.parse(peekingIterator)(using context) shouldBe Right(ASTOptrExpressionNode(optrValueNode, Seq(expression1, expression2, expression3)))
+          sut.parse(peekingIterator)(using context) shouldBe Right(OptrExpressionNode(optrValueNode, Seq(expression1, expression2, expression3)))
       }
     }
 
@@ -552,7 +552,7 @@ class ParserSpec extends AnyFunSpec
 
           val sut = parser
 
-          sut.parse(peekingIterator)(using context) shouldBe Right(ASTOptrExpressionNode(optrValueNode, Seq(expression)))
+          sut.parse(peekingIterator)(using context) shouldBe Right(OptrExpressionNode(optrValueNode, Seq(expression)))
       }
     }
 
@@ -572,7 +572,7 @@ class ParserSpec extends AnyFunSpec
 
           val sut = parser
 
-          sut.parse(peekingIterator)(using context) shouldBe Right(ASTOptrExpressionNode(optrValueNode, Seq.empty))
+          sut.parse(peekingIterator)(using context) shouldBe Right(OptrExpressionNode(optrValueNode, Seq.empty))
       }
     }
 
