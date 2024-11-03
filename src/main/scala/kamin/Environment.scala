@@ -2,24 +2,30 @@ package kamin
 
 import scala.collection.mutable
 
-// Environment class to store variables and manage scopes
-class Environment[EnvironmentType]:
-  // Stack of scopes, each scope is a mutable map of variable names to expressions
-  private val scopes: mutable.Stack[mutable.Map[String, EnvironmentType]] = mutable.Stack(mutable.Map())
+sealed trait Environment:
+  def get(key: String): Option[Int]
+  def set(key: String, value: Int): Unit
+  def openScope(keys: Seq[String]): Unit
+  def closeScope(): Unit
 
-  // Open a new scope
-  def openScope(): Unit =
-    scopes.push(mutable.Map())
+class GlobalAndLocalScopeEnvironment extends Environment:
+  private val globalScope = mutable.HashMap[String, Option[Int]]()
+  private val localScopes = mutable.Stack[mutable.Map[String, Option[Int]]]()
 
-  // Close the current scope
-  def closeScope(): Unit =
-    if scopes.size > 1 then scopes.pop()
+  override def openScope(keys: Seq[String]): Unit =
+    val scope: mutable.Map[String, Option[Int]] = mutable.Map.from(keys.map(_ -> None))
+    localScopes.push(scope)
+
+  override def closeScope(): Unit =
+    if localScopes.nonEmpty then localScopes.pop()
     else throw new IllegalStateException("Cannot close the global scope")
 
-  // Store a variable with an associated expression in the current (top) scope
-  def setVariable(name: String, value: EnvironmentType): Unit =
-    scopes.top(name) = value
+  override def get(key: String): Option[Int] =
+    localScopes.collectFirst { case scope if scope.contains(key) => scope(key) }
+      .flatten
+      .orElse(globalScope.get(key).flatten)
 
-  // Look up a variable by name, starting from the newest scope to the oldest
-  def getVariable(name: String): Option[EnvironmentType] =
-    scopes.iterator.flatMap(_.get(name)).nextOption()
+  override def set(key: String, value: Int): Unit =
+    localScopes.headOption match
+      case Some(scope) if scope.contains(key) => scope(key) = Some(value)
+      case _ => globalScope(key) = Some(value)

@@ -39,7 +39,7 @@ class ParserSpec extends AnyFunSpec
       val sut = new FunDefNodeParser {}
 
       sut.parse(peekingIterator)(using context) shouldBe Right(FunDefNode(
-        FunctionNode("plus"), Seq(ArgumentNode("x"), ArgumentNode("y")), expression))
+        "plus", Seq("x", "y"), expression))
     }
 
     it("should return a fun def node when presented with a valid function definition with a single argument") {
@@ -57,7 +57,7 @@ class ParserSpec extends AnyFunSpec
       val sut = new FunDefNodeParser {}
 
       sut.parse(peekingIterator)(using context) shouldBe Right(FunDefNode(
-        FunctionNode("not"), Seq(ArgumentNode("x")), expression))
+        "not", Seq("x"), expression))
     }
 
     it("should return a fun def node when presented with a valid function definition with no arguments") {
@@ -75,7 +75,7 @@ class ParserSpec extends AnyFunSpec
       val sut = new FunDefNodeParser {}
 
       sut.parse(peekingIterator)(using context) shouldBe Right(FunDefNode(
-        FunctionNode("random"), Seq.empty, expression))
+        "random", Seq.empty, expression))
     }
 
     it("should return an error when presented with an fundef construction not closed") {
@@ -152,7 +152,7 @@ class ParserSpec extends AnyFunSpec
 
       val sut = new VariableExpressionNodeParser {}
 
-      sut.parse(peekingIterator)(using context = null) shouldBe Right(VariableExpressionNode(VariableNode("myFoo")))
+      sut.parse(peekingIterator)(using context = null) shouldBe Right(VariableExpressionNode("myFoo"))
     }
 
     it("should return an error when presented with an invalid name") {
@@ -357,7 +357,7 @@ class ParserSpec extends AnyFunSpec
       ).iterator)
       val sut = new SetExpressionNodeParser {}
 
-      sut.parse(peekingIterator)(using context) shouldBe Right(SetExpressionNode(VariableNode("foo"), valueExpression))
+      sut.parse(peekingIterator)(using context) shouldBe Right(SetExpressionNode("foo", valueExpression))
     }
 
     it("should return an error when presented with a set construction not closed") {
@@ -502,7 +502,7 @@ class ParserSpec extends AnyFunSpec
     (new LessThanExpressionNodeParser{}, Token(TokenType.LessThan, "OPERAND"), LessThanValueOperationNode()),
     (new GreaterThanExpressionNodeParser{}, Token(TokenType.GreaterThan, "OPERAND"), GreaterThanValueOperationNode()),
     (new PrintExpressionNodeParser{}, Token(TokenType.Print, "OPERAND"), PrintValueOperationNode()),
-    (new FunctionCallExpressionNodeParser{}, Token(TokenType.Name, "foo"), FunctionOperationNode(kamin.FunctionNode("foo")))
+    (new FunctionCallExpressionNodeParser{}, Token(TokenType.Name, "foo"), FunctionOperationNode("foo"))
   )
 
   describe("Optr expression node parsers") {

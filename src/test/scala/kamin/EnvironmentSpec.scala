@@ -1,67 +1,60 @@
 package kamin
 
+import kamin.GlobalAndLocalScopeEnvironment
 import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should.Matchers
 
-class EnvironmentSpec extends AnyFunSpec:
+class EnvironmentSpec extends AnyFunSpec with Matchers {
 
-  describe("An Environment") {
+  describe("GlobalAndLocalScopeEnvironment") {
 
-    it("should set and get a variable in a single scope") {
-      val env = new Environment[String]
-      env.setVariable("x", "10")
-      assert(env.getVariable("x").contains("10"))
+    it("should set and get a variable in the global scope") {
+      val env = GlobalAndLocalScopeEnvironment()
+      env.set("x", 42)
+      env.get("x") shouldEqual Some(42)
     }
 
-    it("should get the variable from the closest scope") {
-      val env = new Environment[String]
-      env.setVariable("x", "10")
-      env.openScope()
-      env.setVariable("x", "20")
-      assert(env.getVariable("x").contains("20"))
+    it("should return None for an undefined variable") {
+      val env = GlobalAndLocalScopeEnvironment()
+      env.get("y") shouldEqual None
     }
 
-    it("should retrieve a variable from an outer scope if it is not found in the current scope") {
-      val env = new Environment[String]
-      env.setVariable("x", "10")
-      env.openScope()
-      assert(env.getVariable("x").contains("10"))
+    it("should open a new local scope and get variables from it") {
+      val env = GlobalAndLocalScopeEnvironment()
+      env.openScope(Seq("a", "b"))
+      env.get("a") shouldEqual None
+      env.set("a", 10)
+      env.get("a") shouldEqual Some(10)
     }
 
-    it("should return None if a variable is not found in any scope") {
-      val env = new Environment[String]
-      assert(env.getVariable("y").isEmpty)
+    it("should shadow a global variable with a local variable") {
+      val env = GlobalAndLocalScopeEnvironment()
+      env.set("x", 42)
+      env.openScope(Seq("x"))
+      env.set("x", 100)
+      env.get("x") shouldEqual Some(100)
     }
 
-    it("should revert to an outer scope variable after closing the inner scope") {
-      val env = new Environment[String]
-      env.setVariable("x", "10")
-      env.openScope()
-      env.setVariable("x", "20")
+    it("should fall back to the global variable when no local variable is present") {
+      val env = GlobalAndLocalScopeEnvironment()
+      env.set("x", 42)
+      env.openScope(Seq("y"))
+      env.get("x") shouldEqual Some(42)
+    }
+
+    it("should close the local scope and return to the global scope value") {
+      val env = GlobalAndLocalScopeEnvironment()
+      env.set("x", 42)
+      env.openScope(Seq("x"))
+      env.set("x", 100)
+      env.get("x") shouldEqual Some(100)
       env.closeScope()
-      assert(env.getVariable("x").contains("10"))  // Should revert to outer scope value
+      env.get("x") shouldEqual Some(42)
     }
 
-    it("should throw an exception when attempting to close the global scope") {
-      val env = new Environment[String]
-      assertThrows[IllegalStateException] {
-        env.closeScope()
-      }
-    }
-
-    it("should manage nested scopes with different variables") {
-      val env = new Environment[String]
-      env.setVariable("a", "global")
-      env.openScope()
-      env.setVariable("b", "scope1")
-      env.openScope()
-      env.setVariable("c", "scope2")
-
-      assert(env.getVariable("a").contains("global"))
-      assert(env.getVariable("b").contains("scope1"))
-      assert(env.getVariable("c").contains("scope2"))
-
-      env.closeScope()
-      assert(env.getVariable("c").isEmpty)
-      assert(env.getVariable("b").contains("scope1"))
+    it("should throw an exception if trying to close the global scope") {
+      val env = GlobalAndLocalScopeEnvironment()
+      an[IllegalStateException] should be thrownBy env.closeScope()
     }
   }
+}

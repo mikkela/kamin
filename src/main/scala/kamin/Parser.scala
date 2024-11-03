@@ -30,7 +30,7 @@ private def checkTokensForPresence(tokens: PeekingIterator[Token], expected: Tok
     case (left, _) => left // Early termination if error found
   }
 
-private def parseListOfElements[ElementType <: Node](tokens: PeekingIterator[Token], elementParser: PeekingIterator[Token] => Either[String, ElementType]): Either[String, Seq[ElementType]] =
+private def parseListOfElements[ElementType](tokens: PeekingIterator[Token], elementParser: PeekingIterator[Token] => Either[String, ElementType]): Either[String, Seq[ElementType]] =
   var list = List.empty[ElementType]
   var peek = tokens.peek(1)
   while (peek.nonEmpty && peek.head.tokenType != RightParenthesis)
@@ -76,7 +76,7 @@ trait FunDefNodeParser extends Parser[FunDefNode, BasicLanguageFamilyParserConte
                   t.peek(1) match
                     case Seq(Token(TokenType.Name, literal)) =>
                       tokens.consumeTokens(1)
-                      Right(ArgumentNode(literal))
+                      Right(literal)
                     case Seq(token) => invalidToken(token)
                     case _ => invalidEndOfProgram
                 ) match
@@ -89,7 +89,7 @@ trait FunDefNodeParser extends Parser[FunDefNode, BasicLanguageFamilyParserConte
                             checkTokensForPresence(tokens, TokenType.RightParenthesis) match
                             case Right(_) =>
                               tokens.consumeTokens(1)
-                              Right(FunDefNode(FunctionNode(name), args, expression))
+                              Right(FunDefNode(name, args, expression))
                             case Left(value) => Left(value)
                           case Left(value) => Left(value)
                       case Left(value) => Left(value)
@@ -112,7 +112,7 @@ trait VariableExpressionNodeParser extends Parser[ExpressionNode, BasicLanguageF
     checkTokensForPresence(tokens, TokenType.Name) match
       case Right(Seq(value)) =>
         tokens.consumeTokens(1)
-        Right(VariableExpressionNode(VariableNode(value.literal)))
+        Right(VariableExpressionNode(value.literal))
       case _ => super.parse(tokens)
 
 trait IfExpressionNodeParser extends Parser[ExpressionNode, BasicLanguageFamilyParserContext]:
@@ -162,7 +162,7 @@ trait SetExpressionNodeParser extends Parser[ExpressionNode, BasicLanguageFamily
                   case Left(value) => Left(value)
                   case Right(_) =>
                     tokens.consumeTokens(1)
-                    Right(kamin.SetExpressionNode(VariableNode(variable), valueExpression))
+                    Right(kamin.SetExpressionNode(variable, valueExpression))
               case Right(_) => unexpectedError
           case Right(_) => unexpectedError
           case Left(value) => Left(value)
@@ -232,4 +232,4 @@ trait PrintExpressionNodeParser extends Parser[ExpressionNode, BasicLanguageFami
 
 trait FunctionCallExpressionNodeParser extends Parser[ExpressionNode, BasicLanguageFamilyParserContext]:
   override def parse(tokens: PeekingIterator[Token])(using context: BasicLanguageFamilyParserContext): Either[String, ExpressionNode] =
-    parseOperator(tokens, TokenType.Name, context, literal => FunctionOperationNode(FunctionNode(literal)), tokens => super.parse(tokens)(using context))
+    parseOperator(tokens, TokenType.Name, context, literal => FunctionOperationNode(literal), tokens => super.parse(tokens)(using context))
