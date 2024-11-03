@@ -2,6 +2,8 @@ package kamin
 
 import kamin.Environment
 
+import scala.annotation.tailrec
+
 trait Evaluator[T <: ExpressionNode]:
   extension (t: T) def evaluate(using environment: Environment)(using funDefTable: FunDefTable): Either[String, Int]
 
@@ -16,6 +18,12 @@ given Evaluator[ExpressionNode] with
         summon[Evaluator[VariableExpressionNode]].evaluate(n)(using environment)(using funDefTable)
       case n: IfExpressionNode =>
         summon[Evaluator[IfExpressionNode]].evaluate(n)(using environment)(using funDefTable)
+      case n: SetExpressionNode =>
+        summon[Evaluator[SetExpressionNode]].evaluate(n)(using environment)(using funDefTable)
+      case n: WhileExpressionNode =>
+        summon[Evaluator[WhileExpressionNode]].evaluate(n)(using environment)(using funDefTable)
+      case n: BeginExpressionNode =>
+        summon[Evaluator[BeginExpressionNode]].evaluate(n)(using environment)(using funDefTable)
       case _ =>
         Left("Not implemented")
 
@@ -37,23 +45,33 @@ given Evaluator[IfExpressionNode] with
       case _ => t.consequenceExpression.evaluate
     }
 
-/*given Evaluator[SetExpressionNode] with
-  extension (t: SetExpressionNode) override def evaluate(environment: Environment[ExpressionNode]): Either[String, Int] =
-    t.testExpression.evaluate(environment).flatMap {
-      case 0 => t.alternativeExpression.evaluate(environment)
-      case _ => t.consequenceExpression.evaluate(environment)
-    }
+given Evaluator[SetExpressionNode] with
+  extension (t: SetExpressionNode) override def evaluate(using environment: Environment)(using funDefTable: FunDefTable): Either[String, Int] =
+    t.value.evaluate match
+      case Left(value) => Left(value)
+      case Right(value) =>
+        environment.set(t.variable, value)
+        Right(value)
 
 given Evaluator[WhileExpressionNode] with
-  extension (t: WhileExpressionNode) override def evaluate(environment: Environment[ExpressionNode]): Either[String, Int] =
-    var loop = true
-    while (loop) do
-      t.testExpression.evaluate(environment) match
-        case Left(value) => return Left(value)
-        case Right(test) =>
-          loop = test != 0
-          if (loop) then
-            t.bodyExpression.evaluate(environment) match
-              case Left(value) => return Left(value)
-    Right(0)*/
+  extension (t: WhileExpressionNode) override def evaluate(using environment: Environment)(using funDefTable: FunDefTable): Either[String, Int] =
+    @tailrec
+    def evaluateLoop(): Either[String, Int] =
+      t.testExpression.evaluate match
+        case Left(error) => Left(error)
+        case Right(test) if test == 0 => Right(0)
+        case Right(_) =>
+          t.bodyExpression.evaluate match
+            case Left(error) => Left(error)
+            case Right(_) => evaluateLoop() // Recur to continue the loop
+
+    evaluateLoop()
+
+given Evaluator[BeginExpressionNode] with
+  extension (t: BeginExpressionNode) override def evaluate(using environment: Environment)(using funDefTable: FunDefTable): Either[String, Int] =
+    t.expressions.foldLeft[Either[String, Int]](Right(0)) { (acc, expr) =>
+      acc match
+        case Left(error) => Left(error)
+        case Right(_) => expr.evaluate
+    }
 
