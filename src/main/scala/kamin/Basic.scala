@@ -9,8 +9,8 @@ object BasicTokenizer extends Tokenizer
 
   def toToken(s: String): Token =
     s match
-      case "(" => Token(TokenType.LeftParenthesis, "(")
-      case ")" => Token(TokenType.RightParenthesis, ")")
+      case "(" => Token(TokenType.LeftParenthesis, s)
+      case ")" => Token(TokenType.RightParenthesis, s)
       case "=" => Token(TokenType.Equal, s)
       case "<" => Token(TokenType.LessThan, s)
       case ">" => Token(TokenType.GreaterThan, s)

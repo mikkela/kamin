@@ -493,16 +493,16 @@ class ParserSpec extends AnyFunSpec
   }
 
   private val optrTable = Table(
-    ("Parser", "Token", "Expected Optr Value Node"),
-    (new PlusExpressionNodeParser{}, Token(TokenType.Plus, "OPERAND"), PlusValueOperationNode()),
-    (new MinusExpressionNodeParser{}, Token(TokenType.Minus, "OPERAND"), MinusValueOperationNode()),
-    (new MultiplicationExpressionNodeParser{}, Token(TokenType.Asteriks, "OPERAND"), MultiplicationValueOperationNode()),
-    (new DivisionExpressionNodeParser {}, Token(TokenType.Slash, "OPERAND"), DivisionValueOperationNode()),
-    (new EqualExpressionNodeParser{}, Token(TokenType.Equal, "OPERAND"), EqualValueOperationNode()),
-    (new LessThanExpressionNodeParser{}, Token(TokenType.LessThan, "OPERAND"), LessThanValueOperationNode()),
-    (new GreaterThanExpressionNodeParser{}, Token(TokenType.GreaterThan, "OPERAND"), GreaterThanValueOperationNode()),
-    (new PrintExpressionNodeParser{}, Token(TokenType.Print, "OPERAND"), PrintValueOperationNode()),
-    (new FunctionCallExpressionNodeParser{}, Token(TokenType.Name, "foo"), FunctionOperationNode("foo"))
+    ("Parser", "Token", "Expected Operator"),
+    (new PlusExpressionNodeParser{}, Token(TokenType.Plus, "+"), "+"),
+    (new MinusExpressionNodeParser{}, Token(TokenType.Minus, "-"), "-"),
+    (new MultiplicationExpressionNodeParser{}, Token(TokenType.Asteriks, "*"), "*"),
+    (new DivisionExpressionNodeParser {}, Token(TokenType.Slash, "/"), "/"),
+    (new EqualExpressionNodeParser{}, Token(TokenType.Equal, "="), "="),
+    (new LessThanExpressionNodeParser{}, Token(TokenType.LessThan, "<"), "<"),
+    (new GreaterThanExpressionNodeParser{}, Token(TokenType.GreaterThan, ">"), ">"),
+    (new PrintExpressionNodeParser{}, Token(TokenType.Print, "PRINT"), "PRINT"),
+    (new FunctionCallExpressionNodeParser{}, Token(TokenType.Name, "foo"), "foo")
   )
 
   describe("Optr expression node parsers") {
@@ -512,7 +512,7 @@ class ParserSpec extends AnyFunSpec
       val expression3 = mock[ExpressionNode]
 
       forAll(optrTable) {
-        (parser, token, optrValueNode) =>
+        (parser, token, operator) =>
           val results = Seq(Right(expression1), Right(expression2), Right(expression3)).iterator
           val peekingIterator = PeekingIterator(Seq(
             Token(TokenType.LeftParenthesis, "("), token,
@@ -529,7 +529,7 @@ class ParserSpec extends AnyFunSpec
 
           val sut = parser
 
-          sut.parse(peekingIterator)(using context) shouldBe Right(OptrExpressionNode(optrValueNode, Seq(expression1, expression2, expression3)))
+          sut.parse(peekingIterator)(using context) shouldBe Right(OperatorExpressionNode(operator, Seq(expression1, expression2, expression3)))
       }
     }
 
@@ -537,7 +537,7 @@ class ParserSpec extends AnyFunSpec
       val expression = mock[ExpressionNode]
 
       forAll(optrTable) {
-        (parser, token, optrValueNode) =>
+        (parser, token, operator) =>
           val results = Seq(Right(expression)).iterator
           val peekingIterator = PeekingIterator(Seq(
             Token(TokenType.LeftParenthesis, "("), token,
@@ -552,13 +552,13 @@ class ParserSpec extends AnyFunSpec
 
           val sut = parser
 
-          sut.parse(peekingIterator)(using context) shouldBe Right(OptrExpressionNode(optrValueNode, Seq(expression)))
+          sut.parse(peekingIterator)(using context) shouldBe Right(OperatorExpressionNode(operator, Seq(expression)))
       }
     }
 
     it("should return a optr expression node expression when presented with a valid optr construction and no expressions") {
       forAll(optrTable) {
-        (parser, token, optrValueNode) =>
+        (parser, token, operator) =>
           val results = Seq.empty.iterator
           val context = new BasicLanguageFamilyParserContext {
             override def parseExpression(tokens: PeekingIterator[Token]): Either[String, ExpressionNode] =
@@ -572,7 +572,7 @@ class ParserSpec extends AnyFunSpec
 
           val sut = parser
 
-          sut.parse(peekingIterator)(using context) shouldBe Right(OptrExpressionNode(optrValueNode, Seq.empty))
+          sut.parse(peekingIterator)(using context) shouldBe Right(OperatorExpressionNode(operator, Seq.empty))
       }
     }
 

@@ -29,28 +29,6 @@ case class SetExpressionNode(variable: String,
 
 case class BeginExpressionNode(expressions: Seq[ExpressionNode]) extends ExpressionNode
 
-case class OptrExpressionNode(optr: OptrNode, expressions: Seq[ExpressionNode]) extends ExpressionNode
-
-sealed trait OptrNode extends Node
-
-sealed trait ValueOperationNode extends OptrNode
-
-case class PlusValueOperationNode() extends ValueOperationNode
-
-case class MinusValueOperationNode() extends ValueOperationNode
-
-case class MultiplicationValueOperationNode() extends ValueOperationNode
-
-case class DivisionValueOperationNode() extends ValueOperationNode
-
-case class EqualValueOperationNode() extends ValueOperationNode
-
-case class LessThanValueOperationNode() extends ValueOperationNode
-
-case class GreaterThanValueOperationNode() extends ValueOperationNode
-
-case class PrintValueOperationNode() extends ValueOperationNode
-
-case class FunctionOperationNode(functionNode: String) extends OptrNode
+case class OperatorExpressionNode(operator: String, expressions: Seq[ExpressionNode]) extends ExpressionNode
 
 

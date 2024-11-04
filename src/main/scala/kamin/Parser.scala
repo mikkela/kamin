@@ -91,6 +91,7 @@ trait FunDefNodeParser extends Parser[FunDefNode, BasicLanguageFamilyParserConte
                               tokens.consumeTokens(1)
                               Right(FunDefNode(name, args, expression))
                             case Left(value) => Left(value)
+                          case Right(_) => unexpectedError
                           case Left(value) => Left(value)
                       case Left(value) => Left(value)
                   case Left(value) => Left(value)
@@ -185,7 +186,7 @@ trait BeginExpressionNodeParser extends Parser[ExpressionNode, BasicLanguageFami
               case _ => invalidEndOfProgram
       case _ => super.parse(tokens)
 
-def parseOperator(tokens: PeekingIterator[Token], expectedOptrTokenType: TokenType, context: BasicLanguageFamilyParserContext, optrNodeProducer: String => OptrNode, continueChain: PeekingIterator[Token] => Either[String, ExpressionNode]): Either[String, ExpressionNode] =
+def parseOperator(tokens: PeekingIterator[Token], expectedOptrTokenType: TokenType, context: BasicLanguageFamilyParserContext, continueChain: PeekingIterator[Token] => Either[String, ExpressionNode]): Either[String, ExpressionNode] =
   checkTokensForPresence(tokens, TokenType.LeftParenthesis, expectedOptrTokenType) match
     case Left(_) => continueChain(tokens)
     case Right(Seq(Token(LeftParenthesis, _), Token(expectedOptrTokenType, literal))) =>
@@ -195,41 +196,41 @@ def parseOperator(tokens: PeekingIterator[Token], expectedOptrTokenType: TokenTy
         case Right(expressions) =>
           checkTokensForPresence(tokens, TokenType.RightParenthesis) match
             case Left(value) => Left(value)
-            case Right(_) => Right(OptrExpressionNode(optrNodeProducer(literal), expressions))
+            case Right(_) => Right(OperatorExpressionNode(literal, expressions))
     case Right(_) => unexpectedError
 
 trait PlusExpressionNodeParser extends Parser[ExpressionNode, BasicLanguageFamilyParserContext]:
   override def parse(tokens: PeekingIterator[Token])(using context: BasicLanguageFamilyParserContext): Either[String, ExpressionNode] =
-    parseOperator(tokens, TokenType.Plus, context, _ => PlusValueOperationNode(), tokens => super.parse(tokens)(using context))
+    parseOperator(tokens, TokenType.Plus, context, tokens => super.parse(tokens)(using context))
 
 trait MinusExpressionNodeParser extends Parser[ExpressionNode, BasicLanguageFamilyParserContext]:
   override def parse(tokens: PeekingIterator[Token])(using context: BasicLanguageFamilyParserContext): Either[String, ExpressionNode] =
-    parseOperator(tokens, TokenType.Minus, context, _ => MinusValueOperationNode(), tokens => super.parse(tokens)(using context))
+    parseOperator(tokens, TokenType.Minus, context, tokens => super.parse(tokens)(using context))
 
 trait MultiplicationExpressionNodeParser extends Parser[ExpressionNode, BasicLanguageFamilyParserContext]:
   override def parse(tokens: PeekingIterator[Token])(using context: BasicLanguageFamilyParserContext): Either[String, ExpressionNode] =
-    parseOperator(tokens, TokenType.Asteriks, context, _ => MultiplicationValueOperationNode(), tokens => super.parse(tokens)(using context))
+    parseOperator(tokens, TokenType.Asteriks, context, tokens => super.parse(tokens)(using context))
 
 trait DivisionExpressionNodeParser extends Parser[ExpressionNode, BasicLanguageFamilyParserContext]:
   override def parse(tokens: PeekingIterator[Token])(using context: BasicLanguageFamilyParserContext): Either[String, ExpressionNode] =
-    parseOperator(tokens, TokenType.Slash, context, _ => DivisionValueOperationNode(), tokens => super.parse(tokens)(using context))
+    parseOperator(tokens, TokenType.Slash, context, tokens => super.parse(tokens)(using context))
 
 trait EqualExpressionNodeParser extends Parser[ExpressionNode, BasicLanguageFamilyParserContext]:
   override def parse(tokens: PeekingIterator[Token])(using context: BasicLanguageFamilyParserContext): Either[String, ExpressionNode] =
-    parseOperator(tokens, TokenType.Equal, context, _ => EqualValueOperationNode(), tokens => super.parse(tokens)(using context))
+    parseOperator(tokens, TokenType.Equal, context, tokens => super.parse(tokens)(using context))
 
 trait LessThanExpressionNodeParser extends Parser[ExpressionNode, BasicLanguageFamilyParserContext]:
   override def parse(tokens: PeekingIterator[Token])(using context: BasicLanguageFamilyParserContext): Either[String, ExpressionNode] =
-    parseOperator(tokens, TokenType.LessThan, context, _ => LessThanValueOperationNode(), tokens => super.parse(tokens)(using context))
+    parseOperator(tokens, TokenType.LessThan, context, tokens => super.parse(tokens)(using context))
 
 trait GreaterThanExpressionNodeParser extends Parser[ExpressionNode, BasicLanguageFamilyParserContext]:
   override def parse(tokens: PeekingIterator[Token])(using context: BasicLanguageFamilyParserContext): Either[String, ExpressionNode] =
-    parseOperator(tokens, TokenType.GreaterThan, context, _ => GreaterThanValueOperationNode(), tokens => super.parse(tokens)(using context))
+    parseOperator(tokens, TokenType.GreaterThan, context, tokens => super.parse(tokens)(using context))
 
 trait PrintExpressionNodeParser extends Parser[ExpressionNode, BasicLanguageFamilyParserContext]:
   override def parse(tokens: PeekingIterator[Token])(using context: BasicLanguageFamilyParserContext): Either[String, ExpressionNode] =
-    parseOperator(tokens, TokenType.Print, context, _ => PrintValueOperationNode(), tokens => super.parse(tokens)(using context))
+    parseOperator(tokens, TokenType.Print, context, tokens => super.parse(tokens)(using context))
 
 trait FunctionCallExpressionNodeParser extends Parser[ExpressionNode, BasicLanguageFamilyParserContext]:
   override def parse(tokens: PeekingIterator[Token])(using context: BasicLanguageFamilyParserContext): Either[String, ExpressionNode] =
-    parseOperator(tokens, TokenType.Name, context, literal => FunctionOperationNode(literal), tokens => super.parse(tokens)(using context))
+    parseOperator(tokens, TokenType.Name, context, tokens => super.parse(tokens)(using context))
