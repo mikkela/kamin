@@ -202,7 +202,7 @@ class EvaluatorSpec extends AnyFunSpec
 
     it("should return the the error if the function call have too many parameters") {
       val env = GlobalAndLocalScopeEnvironment()
-      val sut = FunctionCallExpressionNode("foo", 
+      val sut = FunctionCallExpressionNode("foo",
         Seq(IntegerExpressionNode(123), IntegerExpressionNode(234), IntegerExpressionNode(542)))
       val table = new FunctionDefinitionTable {}
       table.register(
@@ -227,6 +227,117 @@ class EvaluatorSpec extends AnyFunSpec
             VariableExpressionNode("x"),
             VariableExpressionNode("y")))))
       sut.evaluate(using env)(using table) shouldBe Left("y is not recognized")
+    }
+  }
+
+  describe("evaluate for AdditionExpressionNode") {
+    it("should return the result of addition of the operands when called") {
+      val sut = AdditionExpressionNode(IntegerExpressionNode(10), IntegerExpressionNode(20))
+      sut.evaluate(using GlobalAndLocalScopeEnvironment())(using FunctionDefinitionTable()) shouldBe Right(30)
+    }
+
+    it("should return the the error if one of the parameter evaluations returns an error") {
+      val sut = AdditionExpressionNode(IntegerExpressionNode(10), VariableExpressionNode("y"))
+      sut.evaluate(using GlobalAndLocalScopeEnvironment())(using FunctionDefinitionTable()) shouldBe Left("y is not recognized")
+    }
+  }
+
+  describe("evaluate for SubtractionExpressionNode") {
+    it("should return the result of subtraction of the operands when called") {
+      val sut = SubtractionExpressionNode(IntegerExpressionNode(30), IntegerExpressionNode(20))
+      sut.evaluate(using GlobalAndLocalScopeEnvironment())(using FunctionDefinitionTable()) shouldBe Right(10)
+    }
+
+    it("should return the the error if one of the parameter evaluations returns an error") {
+      val sut = SubtractionExpressionNode(IntegerExpressionNode(10), VariableExpressionNode("y"))
+      sut.evaluate(using GlobalAndLocalScopeEnvironment())(using FunctionDefinitionTable()) shouldBe Left("y is not recognized")
+    }
+  }
+
+  describe("evaluate for MultiplicationExpressionNode") {
+    it("should return the result of multiplication of the operands when called") {
+      val sut = MultiplicationExpressionNode(IntegerExpressionNode(30), IntegerExpressionNode(20))
+      sut.evaluate(using GlobalAndLocalScopeEnvironment())(using FunctionDefinitionTable()) shouldBe Right(600)
+    }
+
+    it("should return the the error if one of the parameter evaluations returns an error") {
+      val sut = MultiplicationExpressionNode(IntegerExpressionNode(10), VariableExpressionNode("y"))
+      sut.evaluate(using GlobalAndLocalScopeEnvironment())(using FunctionDefinitionTable()) shouldBe Left("y is not recognized")
+    }
+  }
+
+  describe("evaluate for DivisionExpressionNode") {
+    it("should return the result of division of the operands when called") {
+      val sut = DivisionExpressionNode(IntegerExpressionNode(40), IntegerExpressionNode(20))
+      sut.evaluate(using GlobalAndLocalScopeEnvironment())(using FunctionDefinitionTable()) shouldBe Right(2)
+    }
+
+    it("should return the the error if one of the parameter evaluations returns an error") {
+      val sut = DivisionExpressionNode(IntegerExpressionNode(10), VariableExpressionNode("y"))
+      sut.evaluate(using GlobalAndLocalScopeEnvironment())(using FunctionDefinitionTable()) shouldBe Left("y is not recognized")
+    }
+  }
+
+  describe("evaluate for EqualityExpressionNode") {
+    it("should return 1 if the operands are equal") {
+      val sut = EqualityExpressionNode(IntegerExpressionNode(40), IntegerExpressionNode(40))
+      sut.evaluate(using GlobalAndLocalScopeEnvironment())(using FunctionDefinitionTable()) shouldBe Right(1)
+    }
+
+    it("should return 0 if the operands are not equal") {
+      val sut = EqualityExpressionNode(IntegerExpressionNode(40), IntegerExpressionNode(50))
+      sut.evaluate(using GlobalAndLocalScopeEnvironment())(using FunctionDefinitionTable()) shouldBe Right(0)
+    }
+
+    it("should return the the error if one of the parameter evaluations returns an error") {
+      val sut = EqualityExpressionNode(IntegerExpressionNode(10), VariableExpressionNode("y"))
+      sut.evaluate(using GlobalAndLocalScopeEnvironment())(using FunctionDefinitionTable()) shouldBe Left("y is not recognized")
+    }
+  }
+
+  describe("evaluate for LessThenExpressionNode") {
+    it("should return 0 if the first operand is greater than the second") {
+      val sut = LessThanExpressionNode(IntegerExpressionNode(70), IntegerExpressionNode(40))
+      sut.evaluate(using GlobalAndLocalScopeEnvironment())(using FunctionDefinitionTable()) shouldBe Right(0)
+    }
+
+    it("should return 1 if the first operand is smaller than the second") {
+      val sut = LessThanExpressionNode(IntegerExpressionNode(10), IntegerExpressionNode(50))
+      sut.evaluate(using GlobalAndLocalScopeEnvironment())(using FunctionDefinitionTable()) shouldBe Right(1)
+    }
+
+    it("should return the the error if one of the parameter evaluations returns an error") {
+      val sut = LessThanExpressionNode(IntegerExpressionNode(10), VariableExpressionNode("y"))
+      sut.evaluate(using GlobalAndLocalScopeEnvironment())(using FunctionDefinitionTable()) shouldBe Left("y is not recognized")
+    }
+  }
+
+  describe("evaluate for GreaterThenExpressionNode") {
+    it("should return 1 if the first operand is greater than the second") {
+      val sut = GreaterThanExpressionNode(IntegerExpressionNode(70), IntegerExpressionNode(40))
+      sut.evaluate(using GlobalAndLocalScopeEnvironment())(using FunctionDefinitionTable()) shouldBe Right(1)
+    }
+
+    it("should return 0 if the first operand is smaller than the second") {
+      val sut = GreaterThanExpressionNode(IntegerExpressionNode(10), IntegerExpressionNode(50))
+      sut.evaluate(using GlobalAndLocalScopeEnvironment())(using FunctionDefinitionTable()) shouldBe Right(0)
+    }
+
+    it("should return the the error if one of the parameter evaluations returns an error") {
+      val sut = GreaterThanExpressionNode(IntegerExpressionNode(10), VariableExpressionNode("y"))
+      sut.evaluate(using GlobalAndLocalScopeEnvironment())(using FunctionDefinitionTable()) shouldBe Left("y is not recognized")
+    }
+  }
+
+  describe("evaluate for PrintExpressionNode") {
+    it("should return the result of printing of the operand when called") {
+      val sut = PrintExpressionNode(IntegerExpressionNode(400))
+      sut.evaluate(using GlobalAndLocalScopeEnvironment())(using FunctionDefinitionTable()) shouldBe Right(400)
+    }
+
+    it("should return the the error if one of the parameter evaluations returns an error") {
+      val sut = PrintExpressionNode(VariableExpressionNode("y"))
+      sut.evaluate(using GlobalAndLocalScopeEnvironment())(using FunctionDefinitionTable()) shouldBe Left("y is not recognized")
     }
   }
 }

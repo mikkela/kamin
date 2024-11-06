@@ -24,6 +24,24 @@ given Evaluator[ExpressionNode] with
         summon[Evaluator[WhileExpressionNode]].evaluate(n)(using environment)(using functionDefinitionTable)
       case n: BeginExpressionNode =>
         summon[Evaluator[BeginExpressionNode]].evaluate(n)(using environment)(using functionDefinitionTable)
+      case n: FunctionCallExpressionNode =>
+        summon[Evaluator[FunctionCallExpressionNode]].evaluate(n)(using environment)(using functionDefinitionTable)
+      case n: AdditionExpressionNode =>
+        summon[Evaluator[AdditionExpressionNode]].evaluate(n)(using environment)(using functionDefinitionTable)
+      case n: SubtractionExpressionNode =>
+        summon[Evaluator[SubtractionExpressionNode]].evaluate(n)(using environment)(using functionDefinitionTable)
+      case n: MultiplicationExpressionNode =>
+        summon[Evaluator[MultiplicationExpressionNode]].evaluate(n)(using environment)(using functionDefinitionTable)
+      case n: DivisionExpressionNode =>
+        summon[Evaluator[DivisionExpressionNode]].evaluate(n)(using environment)(using functionDefinitionTable)
+      case n: EqualityExpressionNode =>
+        summon[Evaluator[EqualityExpressionNode]].evaluate(n)(using environment)(using functionDefinitionTable)
+      case n: LessThanExpressionNode =>
+        summon[Evaluator[LessThanExpressionNode]].evaluate(n)(using environment)(using functionDefinitionTable)
+      case n: GreaterThanExpressionNode =>
+        summon[Evaluator[GreaterThanExpressionNode]].evaluate(n)(using environment)(using functionDefinitionTable)
+      case n: PrintExpressionNode =>
+        summon[Evaluator[PrintExpressionNode]].evaluate(n)(using environment)(using functionDefinitionTable)
       case _ =>
         Left("Not implemented")
 
@@ -77,24 +95,24 @@ given Evaluator[BeginExpressionNode] with
 private def undefinedFunctionName(name: String): Left[String, Nothing] =
   Left(s"$name is not recognized as a function")
 
-private def invalidArity(function: String, expectedArity: Int): Left[String, Nothing] =
+private def invalidFunctionArity(function: String, expectedArity: Int): Left[String, Nothing] =
   Left(s"$function requires $expectedArity arguments")
 
-private def evaluateParameters(node: FunctionCallExpressionNode,
+private def evaluateParameters(parameters: Seq[ExpressionNode],
                                environment: Environment,
                                functionDefinitionTable: FunctionDefinitionTable): Either[String, List[Int]] =
-  node.expressions.foldLeft(Right(List.empty[Int]): Either[String, List[Int]]) { (acc, p) =>
+  parameters.foldLeft(Right(List.empty[Int]): Either[String, List[Int]]) { (acc, p) =>
     acc match
       case Left(error) => Left(error) // If there's already an error, keep it
-      case Right(parameters) =>
+      case Right(params) =>
         p.evaluate(using environment)(using functionDefinitionTable) match
           case Left(error) => Left(error) // Stop and return the error if evaluation fails
-          case Right(result) => Right(parameters :+ result) // Append result to the list if successful
+          case Right(result) => Right(params :+ result) // Append result to the list if successful
   }
 given Evaluator[FunctionCallExpressionNode] with
   extension (t: FunctionCallExpressionNode) override def evaluate(using environment: Environment)(using functionDefinitionTable: FunctionDefinitionTable): Either[String, Int] =
 
-    val parameters = evaluateParameters(t, environment, functionDefinitionTable)
+    val parameters = evaluateParameters(t.expressions, environment, functionDefinitionTable)
 
     functionDefinitionTable.lookupFunctionDefinition(t.function) match
       case None => undefinedFunctionName(t.function)
@@ -109,5 +127,63 @@ given Evaluator[FunctionCallExpressionNode] with
               case Right(result) =>
                 environment.closeScope()
                 Right(result)
-          case Right(params) => invalidArity(functionDefinition.function, functionDefinition.arguments.length)
+          case Right(params) => invalidFunctionArity(functionDefinition.function, functionDefinition.arguments.length)
           case Left(error) => Left(error)
+
+given Evaluator[AdditionExpressionNode] with
+  extension (t: AdditionExpressionNode) override def evaluate(using environment: Environment)(using functionDefinitionTable: FunctionDefinitionTable): Either[String, Int] =
+
+    evaluateParameters(Seq(t.operand1, t.operand2), environment, functionDefinitionTable) match
+      case Left(error) => Left(error)
+      case Right(params) => Right(params(0) + params(1))
+
+given Evaluator[SubtractionExpressionNode] with
+  extension (t: SubtractionExpressionNode) override def evaluate(using environment: Environment)(using functionDefinitionTable: FunctionDefinitionTable): Either[String, Int] =
+
+    evaluateParameters(Seq(t.operand1, t.operand2), environment, functionDefinitionTable) match
+      case Left(error) => Left(error)
+      case Right(params) => Right(params(0) - params(1))
+
+given Evaluator[MultiplicationExpressionNode] with
+  extension (t: MultiplicationExpressionNode) override def evaluate(using environment: Environment)(using functionDefinitionTable: FunctionDefinitionTable): Either[String, Int] =
+
+    evaluateParameters(Seq(t.operand1, t.operand2), environment, functionDefinitionTable) match
+      case Left(error) => Left(error)
+      case Right(params) => Right(params(0) * params(1))
+
+given Evaluator[DivisionExpressionNode] with
+  extension (t: DivisionExpressionNode) override def evaluate(using environment: Environment)(using functionDefinitionTable: FunctionDefinitionTable): Either[String, Int] =
+
+    evaluateParameters(Seq(t.operand1, t.operand2), environment, functionDefinitionTable) match
+      case Left(error) => Left(error)
+      case Right(params) => Right(params(0) / params(1))
+
+given Evaluator[EqualityExpressionNode] with
+  extension (t: EqualityExpressionNode) override def evaluate(using environment: Environment)(using functionDefinitionTable: FunctionDefinitionTable): Either[String, Int] =
+
+    evaluateParameters(Seq(t.operand1, t.operand2), environment, functionDefinitionTable) match
+      case Left(error) => Left(error)
+      case Right(params) => Right(if params(0) == params(1) then 1 else 0)
+
+given Evaluator[LessThanExpressionNode] with
+  extension (t: LessThanExpressionNode) override def evaluate(using environment: Environment)(using functionDefinitionTable: FunctionDefinitionTable): Either[String, Int] =
+
+    evaluateParameters(Seq(t.operand1, t.operand2), environment, functionDefinitionTable) match
+      case Left(error) => Left(error)
+      case Right(params) => Right(if params(0) < params(1) then 1 else 0)
+
+given Evaluator[GreaterThanExpressionNode] with
+  extension (t: GreaterThanExpressionNode) override def evaluate(using environment: Environment)(using functionDefinitionTable: FunctionDefinitionTable): Either[String, Int] =
+
+    evaluateParameters(Seq(t.operand1, t.operand2), environment, functionDefinitionTable) match
+      case Left(error) => Left(error)
+      case Right(params) => Right(if params(0) > params(1) then 1 else 0)
+
+given Evaluator[PrintExpressionNode] with
+  extension (t: PrintExpressionNode) override def evaluate(using environment: Environment)(using functionDefinitionTable: FunctionDefinitionTable): Either[String, Int] =
+
+    evaluateParameters(Seq(t.argument), environment, functionDefinitionTable) match
+      case Left(error) => Left(error)
+      case Right(params) =>
+        println(params.head)
+        Right(params.head)

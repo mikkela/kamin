@@ -208,7 +208,7 @@ def parseOperator(tokens: PeekingIterator[Token],
           checkTokensForPresence(tokens, TokenType.RightParenthesis) match
             case Left(value) => Left(value)
             case Right(_) => Right(producer(literal, expressions))
-        case Right(expressions) => invalidArity(expectedOperator.literal, expectedArity.get)
+        case Right(expressions) => invalidArity(expectedOperator, expectedArity.get)
     case Right(_) => unexpectedError
 
 trait AdditionExpressionNodeParser extends Parser[ExpressionNode, BasicLanguageFamilyParserContext]:
