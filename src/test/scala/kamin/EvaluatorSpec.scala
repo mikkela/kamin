@@ -168,5 +168,65 @@ class EvaluatorSpec extends AnyFunSpec
       env.get("x") shouldBe None
       env.get("y") shouldBe None
     }
+
+    it("should return the the error if one of the parameter evaluations returns an error") {
+      val env = GlobalAndLocalScopeEnvironment()
+      val sut = FunctionCallExpressionNode("foo", Seq(
+        VariableExpressionNode("y"),
+        IntegerExpressionNode(123)))
+      val table = new FunctionDefinitionTable {}
+      table.register(
+        FunctionDefinitionNode(
+          "foo",
+          Seq("x", "y"),
+          BeginExpressionNode(Seq(
+            SetExpressionNode("a", VariableExpressionNode("x")),
+            SetExpressionNode("b", VariableExpressionNode("y")),
+            IntegerExpressionNode(500)))))
+      sut.evaluate(using env)(using table) shouldBe Left("y is not recognized")
+    }
+
+    it("should return the the error if the function call have too few parameters") {
+      val env = GlobalAndLocalScopeEnvironment()
+      val sut = FunctionCallExpressionNode("foo", Seq(IntegerExpressionNode(123)))
+      val table = new FunctionDefinitionTable {}
+      table.register(
+        FunctionDefinitionNode(
+          "foo",
+          Seq("x", "y"),
+          BeginExpressionNode(Seq(
+            VariableExpressionNode("x"),
+            VariableExpressionNode("y")))))
+      sut.evaluate(using env)(using table) shouldBe Left("foo requires 2 arguments")
+    }
+
+    it("should return the the error if the function call have too many parameters") {
+      val env = GlobalAndLocalScopeEnvironment()
+      val sut = FunctionCallExpressionNode("foo", 
+        Seq(IntegerExpressionNode(123), IntegerExpressionNode(234), IntegerExpressionNode(542)))
+      val table = new FunctionDefinitionTable {}
+      table.register(
+        FunctionDefinitionNode(
+          "foo",
+          Seq("x", "y"),
+          BeginExpressionNode(Seq(
+            VariableExpressionNode("x"),
+            VariableExpressionNode("y")))))
+      sut.evaluate(using env)(using table) shouldBe Left("foo requires 2 arguments")
+    }
+
+    it("should return the the error if the function evaluation fails") {
+      val env = GlobalAndLocalScopeEnvironment()
+      val sut = FunctionCallExpressionNode("foo", Seq(IntegerExpressionNode(123)))
+      val table = new FunctionDefinitionTable {}
+      table.register(
+        FunctionDefinitionNode(
+          "foo",
+          Seq("x"),
+          BeginExpressionNode(Seq(
+            VariableExpressionNode("x"),
+            VariableExpressionNode("y")))))
+      sut.evaluate(using env)(using table) shouldBe Left("y is not recognized")
+    }
   }
 }

@@ -5,47 +5,47 @@ import kamin.Environment
 import scala.annotation.tailrec
 
 trait Evaluator[T <: ExpressionNode]:
-  extension (t: T) def evaluate(using environment: Environment)(using funDefTable: FunctionDefinitionTable): Either[String, Int]
+  extension (t: T) def evaluate(using environment: Environment)(using functionDefinitionTable: FunctionDefinitionTable): Either[String, Int]
 
 private def unrecognizedName(name: String) : String = s"$name is not recognized"
 
 given Evaluator[ExpressionNode] with
-  extension (t: ExpressionNode) override def evaluate(using environment: Environment)(using funDefTable: FunctionDefinitionTable): Either[String, Int]=
+  extension (t: ExpressionNode) override def evaluate(using environment: Environment)(using functionDefinitionTable: FunctionDefinitionTable): Either[String, Int]=
     t match
       case n:IntegerExpressionNode =>
-        summon[Evaluator[IntegerExpressionNode]].evaluate(n)(using environment)(using funDefTable)
+        summon[Evaluator[IntegerExpressionNode]].evaluate(n)(using environment)(using functionDefinitionTable)
       case n: VariableExpressionNode =>
-        summon[Evaluator[VariableExpressionNode]].evaluate(n)(using environment)(using funDefTable)
+        summon[Evaluator[VariableExpressionNode]].evaluate(n)(using environment)(using functionDefinitionTable)
       case n: IfExpressionNode =>
-        summon[Evaluator[IfExpressionNode]].evaluate(n)(using environment)(using funDefTable)
+        summon[Evaluator[IfExpressionNode]].evaluate(n)(using environment)(using functionDefinitionTable)
       case n: SetExpressionNode =>
-        summon[Evaluator[SetExpressionNode]].evaluate(n)(using environment)(using funDefTable)
+        summon[Evaluator[SetExpressionNode]].evaluate(n)(using environment)(using functionDefinitionTable)
       case n: WhileExpressionNode =>
-        summon[Evaluator[WhileExpressionNode]].evaluate(n)(using environment)(using funDefTable)
+        summon[Evaluator[WhileExpressionNode]].evaluate(n)(using environment)(using functionDefinitionTable)
       case n: BeginExpressionNode =>
-        summon[Evaluator[BeginExpressionNode]].evaluate(n)(using environment)(using funDefTable)
+        summon[Evaluator[BeginExpressionNode]].evaluate(n)(using environment)(using functionDefinitionTable)
       case _ =>
         Left("Not implemented")
 
 given Evaluator[IntegerExpressionNode] with
-  extension (t: IntegerExpressionNode) override def evaluate(using environment: Environment)(using funDefTable: FunctionDefinitionTable): Either[String, Int] =
+  extension (t: IntegerExpressionNode) override def evaluate(using environment: Environment)(using functionDefinitionTable: FunctionDefinitionTable): Either[String, Int] =
     Right(t.integerValue)
 
 given Evaluator[VariableExpressionNode] with
-  extension (t: VariableExpressionNode) override def evaluate(using environment: Environment)(using funDefTable: FunctionDefinitionTable): Either[String, Int] =
+  extension (t: VariableExpressionNode) override def evaluate(using environment: Environment)(using functionDefinitionTable: FunctionDefinitionTable): Either[String, Int] =
     environment.get(t.variableExpression) match
       case Some(value) => Right(value)
       case None => Left(unrecognizedName(t.variableExpression))
 
 given Evaluator[IfExpressionNode] with
-  extension (t: IfExpressionNode) override def evaluate(using environment: Environment)(using funDefTable: FunctionDefinitionTable): Either[String, Int] =
+  extension (t: IfExpressionNode) override def evaluate(using environment: Environment)(using functionDefinitionTable: FunctionDefinitionTable): Either[String, Int] =
     t.testExpression.evaluate.flatMap {
       case 0 => t.alternativeExpression.evaluate
       case _ => t.consequenceExpression.evaluate
     }
 
 given Evaluator[SetExpressionNode] with
-  extension (t: SetExpressionNode) override def evaluate(using environment: Environment)(using funDefTable: FunctionDefinitionTable): Either[String, Int] =
+  extension (t: SetExpressionNode) override def evaluate(using environment: Environment)(using functionDefinitionTable: FunctionDefinitionTable): Either[String, Int] =
     t.value.evaluate match
       case Left(value) => Left(value)
       case Right(value) =>
@@ -53,7 +53,7 @@ given Evaluator[SetExpressionNode] with
         Right(value)
 
 given Evaluator[WhileExpressionNode] with
-  extension (t: WhileExpressionNode) override def evaluate(using environment: Environment)(using funDefTable: FunctionDefinitionTable): Either[String, Int] =
+  extension (t: WhileExpressionNode) override def evaluate(using environment: Environment)(using functionDefinitionTable: FunctionDefinitionTable): Either[String, Int] =
     @tailrec
     def evaluateLoop(): Either[String, Int] =
       t.testExpression.evaluate match
@@ -67,38 +67,47 @@ given Evaluator[WhileExpressionNode] with
     evaluateLoop()
 
 given Evaluator[BeginExpressionNode] with
-  extension (t: BeginExpressionNode) override def evaluate(using environment: Environment)(using funDefTable: FunctionDefinitionTable): Either[String, Int] =
+  extension (t: BeginExpressionNode) override def evaluate(using environment: Environment)(using functionDefinitionTable: FunctionDefinitionTable): Either[String, Int] =
     t.expressions.foldLeft[Either[String, Int]](Right(0)) { (acc, expr) =>
       acc match
         case Left(error) => Left(error)
         case Right(_) => expr.evaluate
     }
 
+private def undefinedFunctionName(name: String): Left[String, Nothing] =
+  Left(s"$name is not recognized as a function")
+
+private def invalidArity(function: String, expectedArity: Int): Left[String, Nothing] =
+  Left(s"$function requires $expectedArity arguments")
+
+private def evaluateParameters(node: FunctionCallExpressionNode,
+                               environment: Environment,
+                               functionDefinitionTable: FunctionDefinitionTable): Either[String, List[Int]] =
+  node.expressions.foldLeft(Right(List.empty[Int]): Either[String, List[Int]]) { (acc, p) =>
+    acc match
+      case Left(error) => Left(error) // If there's already an error, keep it
+      case Right(parameters) =>
+        p.evaluate(using environment)(using functionDefinitionTable) match
+          case Left(error) => Left(error) // Stop and return the error if evaluation fails
+          case Right(result) => Right(parameters :+ result) // Append result to the list if successful
+  }
 given Evaluator[FunctionCallExpressionNode] with
-  extension (t: FunctionCallExpressionNode) override def evaluate(using environment: Environment)(using funDefTable: FunctionDefinitionTable): Either[String, Int] =
+  extension (t: FunctionCallExpressionNode) override def evaluate(using environment: Environment)(using functionDefinitionTable: FunctionDefinitionTable): Either[String, Int] =
 
-    val parameters =
-      t.expressions.foldLeft(Right(List.empty[Int]): Either[String, List[Int]]) { (acc, p) =>
-        acc match
-          case Left(error) => Left(error) // If there's already an error, keep it
-          case Right(parameters) =>
-            p.evaluate(using environment)(using funDefTable) match
-              case Left(error) => Left(error) // Stop and return the error if evaluation fails
-              case Right(result) => Right(parameters :+ result) // Append result to the list if successful
-      }
+    val parameters = evaluateParameters(t, environment, functionDefinitionTable)
 
-    val arguments = funDefTable.lookupFunctionArguments(t.function)
+    functionDefinitionTable.lookupFunctionDefinition(t.function) match
+      case None => undefinedFunctionName(t.function)
+      case Some(functionDefinition) =>
+        parameters match
+          case Right(params) if params.length == functionDefinition.arguments.length =>
+            environment.openScope(functionDefinition.arguments)
+            functionDefinition.arguments.zip(params).foreach((a, p) => environment.set(a, p))
 
-    (parameters, arguments) match
-      case (Right(params), Right(args)) if params.length == args.length =>
-        environment.openScope(args)
-        args.zip(params).foreach((a, p)=>environment.set(a, p))
-
-        val result = funDefTable.lookupFunctionCall(t.function).flatMap { body =>
-          body(environment, funDefTable)
-        }
-        environment.closeScope()
-        result
-      case (Right(params), Right(args)) => Left(s"Invalid number of arguments. Expected: ${args.length}, got: ${params.length}")
-      case (Left(error), _) => Left(error)
-      case (_, Left(error)) => Left(error)
+            functionDefinition.expression.evaluate(using environment)(using functionDefinitionTable) match
+              case Left(error) => Left(error)
+              case Right(result) =>
+                environment.closeScope()
+                Right(result)
+          case Right(params) => invalidArity(functionDefinition.function, functionDefinition.arguments.length)
+          case Left(error) => Left(error)
