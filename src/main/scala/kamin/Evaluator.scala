@@ -135,49 +135,49 @@ given Evaluator[AdditionExpressionNode] with
 
     evaluateParameters(Seq(t.operand1, t.operand2), environment, functionDefinitionTable) match
       case Left(error) => Left(error)
-      case Right(params) => Right(params(0) + params(1))
+      case Right(params) => Right(params.head + params(1))
 
 given Evaluator[SubtractionExpressionNode] with
   extension (t: SubtractionExpressionNode) override def evaluate(using environment: Environment)(using functionDefinitionTable: FunctionDefinitionTable): Either[String, Int] =
 
     evaluateParameters(Seq(t.operand1, t.operand2), environment, functionDefinitionTable) match
       case Left(error) => Left(error)
-      case Right(params) => Right(params(0) - params(1))
+      case Right(params) => Right(params.head - params(1))
 
 given Evaluator[MultiplicationExpressionNode] with
   extension (t: MultiplicationExpressionNode) override def evaluate(using environment: Environment)(using functionDefinitionTable: FunctionDefinitionTable): Either[String, Int] =
 
     evaluateParameters(Seq(t.operand1, t.operand2), environment, functionDefinitionTable) match
       case Left(error) => Left(error)
-      case Right(params) => Right(params(0) * params(1))
+      case Right(params) => Right(params.head * params(1))
 
 given Evaluator[DivisionExpressionNode] with
   extension (t: DivisionExpressionNode) override def evaluate(using environment: Environment)(using functionDefinitionTable: FunctionDefinitionTable): Either[String, Int] =
 
     evaluateParameters(Seq(t.operand1, t.operand2), environment, functionDefinitionTable) match
       case Left(error) => Left(error)
-      case Right(params) => Right(params(0) / params(1))
+      case Right(params) => Right(params.head / params(1))
 
 given Evaluator[EqualityExpressionNode] with
   extension (t: EqualityExpressionNode) override def evaluate(using environment: Environment)(using functionDefinitionTable: FunctionDefinitionTable): Either[String, Int] =
 
     evaluateParameters(Seq(t.operand1, t.operand2), environment, functionDefinitionTable) match
       case Left(error) => Left(error)
-      case Right(params) => Right(if params(0) == params(1) then 1 else 0)
+      case Right(params) => Right(if params.head == params(1) then 1 else 0)
 
 given Evaluator[LessThanExpressionNode] with
   extension (t: LessThanExpressionNode) override def evaluate(using environment: Environment)(using functionDefinitionTable: FunctionDefinitionTable): Either[String, Int] =
 
     evaluateParameters(Seq(t.operand1, t.operand2), environment, functionDefinitionTable) match
       case Left(error) => Left(error)
-      case Right(params) => Right(if params(0) < params(1) then 1 else 0)
+      case Right(params) => Right(if params.head < params(1) then 1 else 0)
 
 given Evaluator[GreaterThanExpressionNode] with
   extension (t: GreaterThanExpressionNode) override def evaluate(using environment: Environment)(using functionDefinitionTable: FunctionDefinitionTable): Either[String, Int] =
 
     evaluateParameters(Seq(t.operand1, t.operand2), environment, functionDefinitionTable) match
       case Left(error) => Left(error)
-      case Right(params) => Right(if params(0) > params(1) then 1 else 0)
+      case Right(params) => Right(if params.head > params(1) then 1 else 0)
 
 given Evaluator[PrintExpressionNode] with
   extension (t: PrintExpressionNode) override def evaluate(using environment: Environment)(using functionDefinitionTable: FunctionDefinitionTable): Either[String, Int] =
