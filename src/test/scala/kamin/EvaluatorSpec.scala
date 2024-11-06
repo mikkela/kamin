@@ -14,7 +14,7 @@ class EvaluatorSpec extends AnyFunSpec
     it("should return the integer value even without an environment") {
       val sut = ValueExpressionNode(IntegerValueNode(100))
 
-      sut.evaluate(using GlobalAndLocalScopeEnvironment())(using FunDefTable()) shouldBe Right(100)
+      sut.evaluate(using GlobalAndLocalScopeEnvironment())(using new FunDefTable {}) shouldBe Right(100)
     }
   }
 
@@ -24,13 +24,13 @@ class EvaluatorSpec extends AnyFunSpec
       environment.set("x", 20)
       val sut = VariableExpressionNode("x")
 
-      sut.evaluate(using environment)(using FunDefTable()) shouldBe Right(20)
+      sut.evaluate(using environment)(using new FunDefTable{}) shouldBe Right(20)
     }
 
     it("should return an error if the variable does not exists") {
       val sut = VariableExpressionNode("x")
 
-      sut.evaluate(using GlobalAndLocalScopeEnvironment())(using FunDefTable()) shouldBe Left("x is not recognized")
+      sut.evaluate(using GlobalAndLocalScopeEnvironment())(using new FunDefTable{}) shouldBe Left("x is not recognized")
     }
   }
 
@@ -38,19 +38,19 @@ class EvaluatorSpec extends AnyFunSpec
     it("should return the second expression if the evaluation of the first is non zero") {
       val sut = IfExpressionNode(ValueExpressionNode(IntegerValueNode(1)), ValueExpressionNode(IntegerValueNode(2)), ValueExpressionNode(IntegerValueNode(3)))
 
-      sut.evaluate(using GlobalAndLocalScopeEnvironment())(using FunDefTable()) shouldBe Right(2)
+      sut.evaluate(using GlobalAndLocalScopeEnvironment())(using new FunDefTable{}) shouldBe Right(2)
     }
 
     it("should return the third expression if the evaluation of the first is zero") {
       val sut = IfExpressionNode(ValueExpressionNode(IntegerValueNode(0)), ValueExpressionNode(IntegerValueNode(2)), ValueExpressionNode(IntegerValueNode(3)))
 
-      sut.evaluate(using GlobalAndLocalScopeEnvironment())(using FunDefTable()) shouldBe Right(3)
+      sut.evaluate(using GlobalAndLocalScopeEnvironment())(using new FunDefTable{}) shouldBe Right(3)
     }
 
     it("should return the the error if the evaluation of the first an error") {
       val sut = IfExpressionNode(VariableExpressionNode("x"), ValueExpressionNode(IntegerValueNode(2)), ValueExpressionNode(IntegerValueNode(3)))
 
-      sut.evaluate(using GlobalAndLocalScopeEnvironment())(using FunDefTable()) shouldBe Left("x is not recognized")
+      sut.evaluate(using GlobalAndLocalScopeEnvironment())(using new FunDefTable{}) shouldBe Left("x is not recognized")
     }
   }
 
@@ -59,14 +59,14 @@ class EvaluatorSpec extends AnyFunSpec
       val env = GlobalAndLocalScopeEnvironment()
       val sut = SetExpressionNode("foo", ValueExpressionNode(IntegerValueNode(265)))
 
-      sut.evaluate(using env)(using FunDefTable()) shouldBe Right(265)
+      sut.evaluate(using env)(using new FunDefTable{}) shouldBe Right(265)
       env.get("foo") shouldBe Some(265)
     }
 
     it("should return the the error if the evaluation of the value expression returns an error") {
       val sut = SetExpressionNode("wrong", VariableExpressionNode("x"))
 
-      sut.evaluate(using GlobalAndLocalScopeEnvironment())(using FunDefTable()) shouldBe Left("x is not recognized")
+      sut.evaluate(using GlobalAndLocalScopeEnvironment())(using new FunDefTable{}) shouldBe Left("x is not recognized")
     }
   }
 
@@ -74,7 +74,7 @@ class EvaluatorSpec extends AnyFunSpec
     it("should only evaluate the test and not the body if the test returns 0") {
       val sut = WhileExpressionNode(ValueExpressionNode(IntegerValueNode(0)), VariableExpressionNode("x"))
 
-      sut.evaluate(using GlobalAndLocalScopeEnvironment())(using FunDefTable()) shouldBe Right(0)
+      sut.evaluate(using GlobalAndLocalScopeEnvironment())(using new FunDefTable{}) shouldBe Right(0)
     }
 
     it("should only evaluate the body if the test returns non-zero") {
@@ -82,20 +82,20 @@ class EvaluatorSpec extends AnyFunSpec
       env.set("x", 1)
       val sut = WhileExpressionNode(VariableExpressionNode("x"), SetExpressionNode("x", ValueExpressionNode(IntegerValueNode(0))))
 
-      sut.evaluate(using env)(using FunDefTable()) shouldBe Right(0)
+      sut.evaluate(using env)(using new FunDefTable{}) shouldBe Right(0)
       env.get("x") shouldBe Some(0)
     }
 
     it("should return the the error if the evaluation of the test expression returns an error") {
       val sut = WhileExpressionNode(VariableExpressionNode("x"), ValueExpressionNode(IntegerValueNode(100)))
 
-      sut.evaluate(using GlobalAndLocalScopeEnvironment())(using FunDefTable()) shouldBe Left("x is not recognized")
+      sut.evaluate(using GlobalAndLocalScopeEnvironment())(using new FunDefTable{}) shouldBe Left("x is not recognized")
     }
 
     it("should return the the error if the evaluation of the body expression returns an error") {
       val sut = WhileExpressionNode(ValueExpressionNode(IntegerValueNode(100)), VariableExpressionNode("x"))
 
-      sut.evaluate(using GlobalAndLocalScopeEnvironment())(using FunDefTable()) shouldBe Left("x is not recognized")
+      sut.evaluate(using GlobalAndLocalScopeEnvironment())(using new FunDefTable{}) shouldBe Left("x is not recognized")
     }
   }
 
@@ -107,7 +107,7 @@ class EvaluatorSpec extends AnyFunSpec
         SetExpressionNode("y", ValueExpressionNode(IntegerValueNode(25))),
         ValueExpressionNode(IntegerValueNode(123))))
 
-      sut.evaluate(using env)(using FunDefTable()) shouldBe Right(123)
+      sut.evaluate(using env)(using new FunDefTable{}) shouldBe Right(123)
       env.get("x") shouldBe Some(2)
       env.get("y") shouldBe Some(25)
     }
@@ -119,8 +119,54 @@ class EvaluatorSpec extends AnyFunSpec
         VariableExpressionNode("y"),
         ValueExpressionNode(IntegerValueNode(123))))
 
-      sut.evaluate(using env)(using FunDefTable()) shouldBe Left("y is not recognized")
+      sut.evaluate(using env)(using new FunDefTable{}) shouldBe Left("y is not recognized")
       env.get("x") shouldBe Some(2)
+    }
+  }
+
+  describe("evaluate for FunctionCallExpressionNode") {
+    it("should return the result of the function body when called") {
+      val env = GlobalAndLocalScopeEnvironment()
+      env.set("a", 2)
+      env.set("b", 3)
+      val table = new FunDefTable {}
+      table.register(
+        FunDefNode(
+          "foo",
+          Seq("x", "y"),
+          BeginExpressionNode(Seq(
+            SetExpressionNode("a", VariableExpressionNode("x")),
+            SetExpressionNode("b", VariableExpressionNode("y")),
+            ValueExpressionNode(IntegerValueNode(500))))))
+
+      val sut = FunctionCallExpressionNode("foo", Seq(
+        ValueExpressionNode(IntegerValueNode(10)),
+        ValueExpressionNode(IntegerValueNode(20))))
+      sut.evaluate(using env)(using table) shouldBe Right(500)
+      env.get("a") shouldBe Some(10)
+      env.get("b") shouldBe Some(20)
+    }
+
+    it("should remove the local scope environment afterwards") {
+      val env = GlobalAndLocalScopeEnvironment()
+      env.set("a", 2)
+      env.set("b", 3)
+      val table = new FunDefTable {}
+      table.register(
+        FunDefNode(
+          "foo",
+          Seq("x", "y"),
+          BeginExpressionNode(Seq(
+            SetExpressionNode("a", VariableExpressionNode("x")),
+            SetExpressionNode("b", VariableExpressionNode("y")),
+            ValueExpressionNode(IntegerValueNode(500))))))
+
+      val sut = FunctionCallExpressionNode("foo", Seq(
+        ValueExpressionNode(IntegerValueNode(10)),
+        ValueExpressionNode(IntegerValueNode(20))))
+      sut.evaluate(using env)(using table)
+      env.get("x") shouldBe None
+      env.get("y") shouldBe None
     }
   }
 }

@@ -29,6 +29,6 @@ case class SetExpressionNode(variable: String,
 
 case class BeginExpressionNode(expressions: Seq[ExpressionNode]) extends ExpressionNode
 
-case class OperatorExpressionNode(operator: String, expressions: Seq[ExpressionNode]) extends ExpressionNode
+case class FunctionCallExpressionNode(operator: String, expressions: Seq[ExpressionNode]) extends ExpressionNode
 
 

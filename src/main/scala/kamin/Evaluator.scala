@@ -75,3 +75,31 @@ given Evaluator[BeginExpressionNode] with
         case Right(_) => expr.evaluate
     }
 
+given Evaluator[FunctionCallExpressionNode] with
+  extension (t: FunctionCallExpressionNode) override def evaluate(using environment: Environment)(using funDefTable: FunDefTable): Either[String, Int] =
+
+    val parameters =
+      t.expressions.foldLeft(Right(List.empty[Int]): Either[String, List[Int]]) { (acc, p) =>
+        acc match
+          case Left(error) => Left(error) // If there's already an error, keep it
+          case Right(parameters) =>
+            p.evaluate(using environment)(using funDefTable) match
+              case Left(error) => Left(error) // Stop and return the error if evaluation fails
+              case Right(result) => Right(parameters :+ result) // Append result to the list if successful
+      }
+
+    val arguments = funDefTable.lookupFunctionArguments(t.operator)
+
+    (parameters, arguments) match
+      case (Right(params), Right(args)) if params.length == args.length =>
+        environment.openScope(args)
+        args.zip(params).foreach((a, p)=>environment.set(a, p))
+
+        val result = funDefTable.lookupFunctionCall(t.operator).flatMap { body =>
+          body(environment, funDefTable)
+        }
+        environment.closeScope()
+        result
+      case (Right(params), Right(args)) => Left(s"Invalid number of arguments. Expected: ${args.length}, got: ${params.length}")
+      case (Left(error), _) => Left(error)
+      case (_, Left(error)) => Left(error)

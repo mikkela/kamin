@@ -505,7 +505,7 @@ class ParserSpec extends AnyFunSpec
     (new FunctionCallExpressionNodeParser{}, Token(TokenType.Name, "foo"), "foo")
   )
 
-  describe("Optr expression node parsers") {
+  describe("Operator expression node parsers") {
     it("should return a optr expression node expression when presented with a valid optr construction and list of expressions") {
       val expression1 = mock[ExpressionNode]
       val expression2 = mock[ExpressionNode]
@@ -529,7 +529,7 @@ class ParserSpec extends AnyFunSpec
 
           val sut = parser
 
-          sut.parse(peekingIterator)(using context) shouldBe Right(OperatorExpressionNode(operator, Seq(expression1, expression2, expression3)))
+          sut.parse(peekingIterator)(using context) shouldBe Right(FunctionCallExpressionNode(operator, Seq(expression1, expression2, expression3)))
       }
     }
 
@@ -552,7 +552,7 @@ class ParserSpec extends AnyFunSpec
 
           val sut = parser
 
-          sut.parse(peekingIterator)(using context) shouldBe Right(OperatorExpressionNode(operator, Seq(expression)))
+          sut.parse(peekingIterator)(using context) shouldBe Right(FunctionCallExpressionNode(operator, Seq(expression)))
       }
     }
 
@@ -572,7 +572,7 @@ class ParserSpec extends AnyFunSpec
 
           val sut = parser
 
-          sut.parse(peekingIterator)(using context) shouldBe Right(OperatorExpressionNode(operator, Seq.empty))
+          sut.parse(peekingIterator)(using context) shouldBe Right(FunctionCallExpressionNode(operator, Seq.empty))
       }
     }
 
