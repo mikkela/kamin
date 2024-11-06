@@ -386,7 +386,7 @@ class ParserSpec extends AnyFunSpec
       val peekingIterator = PeekingIterator(Seq(
         Token(TokenType.LeftParenthesis, "("), Token(TokenType.Set, "SET"),
         Token(TokenType.Name, "foo"),
-        Token(TokenType.Asteriks, "*")
+        Token(TokenType.Asterisk, "*")
       ).iterator)
       val sut = new SetExpressionNodeParser {}
 
@@ -496,7 +496,7 @@ class ParserSpec extends AnyFunSpec
     ("Parser", "Token", "Expected Operator"),
     (new PlusExpressionNodeParser{}, Token(TokenType.Plus, "+"), "+"),
     (new MinusExpressionNodeParser{}, Token(TokenType.Minus, "-"), "-"),
-    (new MultiplicationExpressionNodeParser{}, Token(TokenType.Asteriks, "*"), "*"),
+    (new MultiplicationExpressionNodeParser{}, Token(TokenType.Asterisk, "*"), "*"),
     (new DivisionExpressionNodeParser {}, Token(TokenType.Slash, "/"), "/"),
     (new EqualExpressionNodeParser{}, Token(TokenType.Equal, "="), "="),
     (new LessThanExpressionNodeParser{}, Token(TokenType.LessThan, "<"), "<"),

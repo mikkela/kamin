@@ -209,7 +209,7 @@ trait MinusExpressionNodeParser extends Parser[ExpressionNode, BasicLanguageFami
 
 trait MultiplicationExpressionNodeParser extends Parser[ExpressionNode, BasicLanguageFamilyParserContext]:
   override def parse(tokens: PeekingIterator[Token])(using context: BasicLanguageFamilyParserContext): Either[String, ExpressionNode] =
-    parseOperator(tokens, TokenType.Asteriks, context, tokens => super.parse(tokens)(using context))
+    parseOperator(tokens, TokenType.Asterisk, context, tokens => super.parse(tokens)(using context))
 
 trait DivisionExpressionNodeParser extends Parser[ExpressionNode, BasicLanguageFamilyParserContext]:
   override def parse(tokens: PeekingIterator[Token])(using context: BasicLanguageFamilyParserContext): Either[String, ExpressionNode] =

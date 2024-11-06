@@ -16,7 +16,7 @@ class BasicLexerSpec extends AnyFunSpec
     ("=", Token(TokenType.Equal, "=")),
     ("+", Token(TokenType.Plus, "+")),
     ("-", Token(TokenType.Minus, "-")),
-    ("*", Token(TokenType.Asteriks, "*")),
+    ("*", Token(TokenType.Asterisk, "*")),
     ("/", Token(TokenType.Slash, "/")),
     ("<", Token(TokenType.LessThan, "<")),
     (">", Token(TokenType.GreaterThan, ">")),

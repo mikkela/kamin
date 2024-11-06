@@ -1,13 +1,13 @@
 package kamin
 
 import kamin.BasicLexer.{LeftParenthesisToken, RightParenthesisToken, EqualToken, LessThanToken, GreaterThanToken, 
-  PlusToken, MinusToken, AsteriksToken, SlashToken, PrintToken, DefineToken, IfToken, WhileToken, SetToken, BeginToken}
+  PlusToken, MinusToken, AsteriskToken, SlashToken, PrintToken, DefineToken, IfToken, WhileToken, SetToken, BeginToken}
 
 import kamin.TokenType.{Define, If, LeftParenthesis, Name, RightParenthesis, While}
 
 object BasicLexer extends Lexer(
   Seq(LeftParenthesisToken, RightParenthesisToken),
-  Seq(EqualToken, LessThanToken, GreaterThanToken, PlusToken, MinusToken, AsteriksToken, SlashToken, PrintToken,
+  Seq(EqualToken, LessThanToken, GreaterThanToken, PlusToken, MinusToken, AsteriskToken, SlashToken, PrintToken,
     DefineToken, IfToken, WhileToken, SetToken, BeginToken)
 )
 

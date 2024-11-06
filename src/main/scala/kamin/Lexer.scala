@@ -3,7 +3,7 @@ package kamin
 import kamin.TokenType.If
 
 enum TokenType:
-  case Illegal, Name, Integer, LeftParenthesis, RightParenthesis, Equal, LessThan, GreaterThan, Plus, Minus, Asteriks, Slash, Define, Print, If, While, Set, Begin
+  case Illegal, Name, Integer, LeftParenthesis, RightParenthesis, Equal, LessThan, GreaterThan, Plus, Minus, Asterisk, Slash, Define, Print, If, While, Set, Begin
 
 
 case class Token(tokenType: TokenType, literal: String)
@@ -79,7 +79,7 @@ class Lexer(separators: => Seq[Token], keywords: => Seq[Token]):
   object GreaterThanToken extends Token(TokenType.GreaterThan, ">")
   object PlusToken extends Token(TokenType.Plus, "+")
   object MinusToken extends Token(TokenType.Minus, "-")
-  object AsteriksToken extends Token(TokenType.Asteriks, "*")
+  object AsteriskToken extends Token(TokenType.Asterisk, "*")
   object SlashToken extends Token(TokenType.Slash, "/")
   object DefineToken extends Token(TokenType.Define, "define")
   object PrintToken extends Token(TokenType.Print, "print")
