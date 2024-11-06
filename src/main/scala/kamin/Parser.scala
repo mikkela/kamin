@@ -213,42 +213,42 @@ def parseOperator(tokens: PeekingIterator[Token],
 
 trait AdditionExpressionNodeParser extends Parser[ExpressionNode, BasicLanguageFamilyParserContext]:
   override def parse(tokens: PeekingIterator[Token])(using context: BasicLanguageFamilyParserContext): Either[String, ExpressionNode] =
-    parseOperator(tokens, PlusToken, Some(2), (_, expressions) => AdditionExpressionNode(expressions(0), expressions(1)),
+    parseOperator(tokens, PlusToken, Some(2), (_, expressions) => AdditionExpressionNode(expressions.head, expressions.tail.head),
       context, tokens => super.parse(tokens)(using context))
 
 trait SubtractionExpressionNodeParser extends Parser[ExpressionNode, BasicLanguageFamilyParserContext]:
   override def parse(tokens: PeekingIterator[Token])(using context: BasicLanguageFamilyParserContext): Either[String, ExpressionNode] =
-    parseOperator(tokens, MinusToken, Some(2), (_, expressions) => SubtractionExpressionNode(expressions(0), expressions(1)),
+    parseOperator(tokens, MinusToken, Some(2), (_, expressions) => SubtractionExpressionNode(expressions.head, expressions.tail.head),
       context, tokens => super.parse(tokens)(using context))
 
 trait MultiplicationExpressionNodeParser extends Parser[ExpressionNode, BasicLanguageFamilyParserContext]:
   override def parse(tokens: PeekingIterator[Token])(using context: BasicLanguageFamilyParserContext): Either[String, ExpressionNode] =
-    parseOperator(tokens, AsteriskToken, Some(2), (_, expressions) => MultiplicationExpressionNode(expressions(0), expressions(1)),
+    parseOperator(tokens, AsteriskToken, Some(2), (_, expressions) => MultiplicationExpressionNode(expressions.head, expressions.tail.head),
       context, tokens => super.parse(tokens)(using context))
 
 trait DivisionExpressionNodeParser extends Parser[ExpressionNode, BasicLanguageFamilyParserContext]:
   override def parse(tokens: PeekingIterator[Token])(using context: BasicLanguageFamilyParserContext): Either[String, ExpressionNode] =
-    parseOperator(tokens, SlashToken, Some(2), (_, expressions) => DivisionExpressionNode(expressions(0), expressions(1)),
+    parseOperator(tokens, SlashToken, Some(2), (_, expressions) => DivisionExpressionNode(expressions.head, expressions.tail.head),
       context, tokens => super.parse(tokens)(using context))
 
 trait EqualityExpressionNodeParser extends Parser[ExpressionNode, BasicLanguageFamilyParserContext]:
   override def parse(tokens: PeekingIterator[Token])(using context: BasicLanguageFamilyParserContext): Either[String, ExpressionNode] =
-    parseOperator(tokens, EqualToken, Some(2), (_, expressions) => EqualityExpressionNode(expressions(0), expressions(1)),
+    parseOperator(tokens, EqualToken, Some(2), (_, expressions) => EqualityExpressionNode(expressions.head, expressions.tail.head),
       context, tokens => super.parse(tokens)(using context))
 
 trait LessThanExpressionNodeParser extends Parser[ExpressionNode, BasicLanguageFamilyParserContext]:
   override def parse(tokens: PeekingIterator[Token])(using context: BasicLanguageFamilyParserContext): Either[String, ExpressionNode] =
-    parseOperator(tokens, LessThanToken, Some(2), (_, expressions) => LessThanExpressionNode(expressions(0), expressions(1)),
+    parseOperator(tokens, LessThanToken, Some(2), (_, expressions) => LessThanExpressionNode(expressions.head, expressions.tail.head),
       context, tokens => super.parse(tokens)(using context))
 
 trait GreaterThanExpressionNodeParser extends Parser[ExpressionNode, BasicLanguageFamilyParserContext]:
   override def parse(tokens: PeekingIterator[Token])(using context: BasicLanguageFamilyParserContext): Either[String, ExpressionNode] =
-    parseOperator(tokens, GreaterThanToken, Some(2), (_, expressions) => GreaterThanExpressionNode(expressions(0), expressions(1)),
+    parseOperator(tokens, GreaterThanToken, Some(2), (_, expressions) => GreaterThanExpressionNode(expressions.head, expressions.tail.head),
       context, tokens => super.parse(tokens)(using context))
 
 trait PrintExpressionNodeParser extends Parser[ExpressionNode, BasicLanguageFamilyParserContext]:
   override def parse(tokens: PeekingIterator[Token])(using context: BasicLanguageFamilyParserContext): Either[String, ExpressionNode] =
-    parseOperator(tokens, PrintToken, Some(1), (_, expressions) => PrintExpressionNode(expressions(0)),
+    parseOperator(tokens, PrintToken, Some(1), (_, expressions) => PrintExpressionNode(expressions.head),
       context, tokens => super.parse(tokens)(using context))
 
 trait FunctionCallExpressionNodeParser extends Parser[ExpressionNode, BasicLanguageFamilyParserContext]:
