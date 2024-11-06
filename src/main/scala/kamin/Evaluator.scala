@@ -7,7 +7,7 @@ import scala.annotation.tailrec
 trait Evaluator[T <: ExpressionNode]:
   extension (t: T) def evaluate(using environment: Environment)(using funDefTable: FunctionDefinitionTable): Either[String, Int]
 
-private def unrecognizedName(name: String) : String = s"${name} is not recognized"
+private def unrecognizedName(name: String) : String = s"$name is not recognized"
 
 given Evaluator[ExpressionNode] with
   extension (t: ExpressionNode) override def evaluate(using environment: Environment)(using funDefTable: FunctionDefinitionTable): Either[String, Int]=

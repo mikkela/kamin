@@ -3,7 +3,7 @@ package kamin
 import scala.collection.mutable
 
 private def undefinedFunctionName(name: String): Left[String, Nothing] =
-  Left(s"${name} is not recognized as a function")
+  Left(s"$name is not recognized as a function")
 
 abstract class FunctionDefinitionTable:
   protected case class FunDefSymbol(name: String, arguments: Seq[String], body: (Environment, FunctionDefinitionTable) => Either[String, Int])
