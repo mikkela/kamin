@@ -87,14 +87,14 @@ given Evaluator[FunctionCallExpressionNode] with
               case Right(result) => Right(parameters :+ result) // Append result to the list if successful
       }
 
-    val arguments = funDefTable.lookupFunctionArguments(t.operator)
+    val arguments = funDefTable.lookupFunctionArguments(t.function)
 
     (parameters, arguments) match
       case (Right(params), Right(args)) if params.length == args.length =>
         environment.openScope(args)
         args.zip(params).foreach((a, p)=>environment.set(a, p))
 
-        val result = funDefTable.lookupFunctionCall(t.operator).flatMap { body =>
+        val result = funDefTable.lookupFunctionCall(t.function).flatMap { body =>
           body(environment, funDefTable)
         }
         environment.closeScope()

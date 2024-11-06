@@ -1,5 +1,6 @@
 package kamin
 
+import kamin.TokenType.{Asterisk, Equal, GreaterThan, LeftParenthesis, LessThan, Minus, Name, Plus, Print, RightParenthesis, Slash}
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.prop.TableDrivenPropertyChecks
 import org.scalatest.matchers.should.Matchers
@@ -7,8 +8,7 @@ import org.scalatestplus.mockito.MockitoSugar
 
 class ParserSpec extends AnyFunSpec
   with Matchers
-  with MockitoSugar
-  with TableDrivenPropertyChecks {
+  with MockitoSugar {
   describe("A Parser") {
     it("should return an error when presented with an empty token stream") {
       val sut = new Parser[Node, ParserContext] {}
@@ -36,7 +36,7 @@ class ParserSpec extends AnyFunSpec
         Token(TokenType.LeftParenthesis, "("), Token(TokenType.Name, "x"), Token(TokenType.Name, "y"), Token(TokenType.RightParenthesis, ")"),
         Token(TokenType.RightParenthesis, ")")
       ).iterator)
-      val sut = new FunDefNodeParser {}
+      val sut = new FunctionDefinitionNodeParser {}
 
       sut.parse(peekingIterator)(using context) shouldBe Right(FunctionDefinitionNode(
         "plus", Seq("x", "y"), expression))
@@ -54,7 +54,7 @@ class ParserSpec extends AnyFunSpec
         Token(TokenType.LeftParenthesis, "("), Token(TokenType.Name, "x"), Token(TokenType.RightParenthesis, ")"),
         Token(TokenType.RightParenthesis, ")")
       ).iterator)
-      val sut = new FunDefNodeParser {}
+      val sut = new FunctionDefinitionNodeParser {}
 
       sut.parse(peekingIterator)(using context) shouldBe Right(FunctionDefinitionNode(
         "not", Seq("x"), expression))
@@ -72,7 +72,7 @@ class ParserSpec extends AnyFunSpec
         Token(TokenType.LeftParenthesis, "("), Token(TokenType.RightParenthesis, ")"),
         Token(TokenType.RightParenthesis, ")")
       ).iterator)
-      val sut = new FunDefNodeParser {}
+      val sut = new FunctionDefinitionNodeParser {}
 
       sut.parse(peekingIterator)(using context) shouldBe Right(FunctionDefinitionNode(
         "random", Seq.empty, expression))
@@ -89,7 +89,7 @@ class ParserSpec extends AnyFunSpec
         Token(TokenType.LeftParenthesis, "("), Token(TokenType.Define, "Define"), Token(TokenType.Name, "foo"),
         Token(TokenType.LeftParenthesis, "("), Token(TokenType.RightParenthesis, ")")
       ).iterator)
-      val sut = new FunDefNodeParser {}
+      val sut = new FunctionDefinitionNodeParser {}
 
       sut.parse(peekingIterator)(using context) shouldBe Left("Invalid end of program")
     }
@@ -105,7 +105,7 @@ class ParserSpec extends AnyFunSpec
         Token(TokenType.LeftParenthesis, "("), Token(TokenType.RightParenthesis, ")"),
         Token(TokenType.Plus, "+")
       ).iterator)
-      val sut = new FunDefNodeParser {}
+      val sut = new FunctionDefinitionNodeParser {}
 
       sut.parse(peekingIterator)(using context) shouldBe Left("Failed due to problem in expression")
     }
@@ -115,7 +115,7 @@ class ParserSpec extends AnyFunSpec
         Token(TokenType.LeftParenthesis, "("), Token(TokenType.Define, "Define"), Token(TokenType.Name, "foo"),
         Token(TokenType.LeftParenthesis, "("), Token(TokenType.Plus, "+"),
       ).iterator)
-      val sut = new FunDefNodeParser {}
+      val sut = new FunctionDefinitionNodeParser {}
 
       sut.parse(peekingIterator)(using null) shouldBe Left("+ is an unexpected token")
     }
@@ -124,7 +124,7 @@ class ParserSpec extends AnyFunSpec
       val peekingIterator = PeekingIterator(Seq(
         Token(TokenType.LeftParenthesis, "("), Token(TokenType.Define, "Define"), Token(TokenType.Minus, "-")
       ).iterator)
-      val sut = new FunDefNodeParser {}
+      val sut = new FunctionDefinitionNodeParser {}
 
       sut.parse(peekingIterator)(using null) shouldBe Left("- is an unexpected token")
     }
@@ -492,109 +492,749 @@ class ParserSpec extends AnyFunSpec
     }
   }
 
-  private val optrTable = Table(
-    ("Parser", "Token", "Expected Operator"),
-    (new PlusExpressionNodeParser{}, Token(TokenType.Plus, "+"), "+"),
-    (new MinusExpressionNodeParser{}, Token(TokenType.Minus, "-"), "-"),
-    (new MultiplicationExpressionNodeParser{}, Token(TokenType.Asterisk, "*"), "*"),
-    (new DivisionExpressionNodeParser {}, Token(TokenType.Slash, "/"), "/"),
-    (new EqualExpressionNodeParser{}, Token(TokenType.Equal, "="), "="),
-    (new LessThanExpressionNodeParser{}, Token(TokenType.LessThan, "<"), "<"),
-    (new GreaterThanExpressionNodeParser{}, Token(TokenType.GreaterThan, ">"), ">"),
-    (new PrintExpressionNodeParser{}, Token(TokenType.Print, "PRINT"), "PRINT"),
-    (new FunctionCallExpressionNodeParser{}, Token(TokenType.Name, "foo"), "foo")
-  )
+  describe("Addition expression node parsers") {
+    it("should return a addition expression node when presented with valid list of expressions") {
+      val expression1 = mock[ExpressionNode]
+      val expression2 = mock[ExpressionNode]
 
-  describe("Operator expression node parsers") {
-    it("should return a optr expression node expression when presented with a valid optr construction and list of expressions") {
+      val results = Seq(Right(expression1), Right(expression2)).iterator
+
+      val peekingIterator = PeekingIterator(Seq(
+        Token(LeftParenthesis, "("), Token(Plus, "+"),
+        Token(TokenType.Name, "eaten"), Token(TokenType.Name, "eaten"),
+        Token(RightParenthesis, ")")
+      ).iterator)
+          val context = new BasicLanguageFamilyParserContext {
+            override def parseExpression(tokens: PeekingIterator[Token]): Either[String, ExpressionNode] =
+              peekingIterator.consumeTokens(1)
+              results.next()
+          }
+
+          val sut = new AdditionExpressionNodeParser {}
+
+          sut.parse(peekingIterator)(using context) shouldBe Right(AdditionExpressionNode(expression1, expression2))
+      }
+
+    it("should return an error when presented with too many expressions") {
       val expression1 = mock[ExpressionNode]
       val expression2 = mock[ExpressionNode]
       val expression3 = mock[ExpressionNode]
 
-      forAll(optrTable) {
-        (parser, token, operator) =>
-          val results = Seq(Right(expression1), Right(expression2), Right(expression3)).iterator
-          val peekingIterator = PeekingIterator(Seq(
-            Token(TokenType.LeftParenthesis, "("), token,
-            Token(TokenType.Name, "eaten"), Token(TokenType.Name, "eaten"), Token(TokenType.Name, "eaten"),
-            Token(TokenType.RightParenthesis, ")")
-          ).iterator)
-          val context = new BasicLanguageFamilyParserContext {
-            override def parseExpression(tokens: PeekingIterator[Token]): Either[String, ExpressionNode] =
-              peekingIterator.consumeTokens(1)
-              results.next()
-          }
+      val results = Seq(Right(expression1), Right(expression2), Right(expression3)).iterator
 
-
-
-          val sut = parser
-
-          sut.parse(peekingIterator)(using context) shouldBe Right(FunctionCallExpressionNode(operator, Seq(expression1, expression2, expression3)))
+      val peekingIterator = PeekingIterator(Seq(
+        Token(LeftParenthesis, "("), Token(Plus, "+"),
+        Token(TokenType.Name, "eaten"), Token(TokenType.Name, "eaten"), Token(TokenType.Name, "eaten"),
+        Token(RightParenthesis, ")")
+      ).iterator)
+      val context = new BasicLanguageFamilyParserContext {
+        override def parseExpression(tokens: PeekingIterator[Token]): Either[String, ExpressionNode] =
+          peekingIterator.consumeTokens(1)
+          results.next()
       }
+
+      val sut = new AdditionExpressionNodeParser {}
+
+      sut.parse(peekingIterator)(using context) shouldBe Left("+ requires 2 arguments")
     }
 
-    it("should return a optr expression node expression when presented with a valid optr construction and single expression") {
+    it("should return an error when presented with too few expressions") {
+      val expression1 = mock[ExpressionNode]
+
+      val results = Seq(Right(expression1)).iterator
+
+      val peekingIterator = PeekingIterator(Seq(
+        Token(LeftParenthesis, "("), Token(Plus, "+"),
+        Token(TokenType.Name, "eaten"),
+        Token(RightParenthesis, ")")
+      ).iterator)
+      val context = new BasicLanguageFamilyParserContext {
+        override def parseExpression(tokens: PeekingIterator[Token]): Either[String, ExpressionNode] =
+          peekingIterator.consumeTokens(1)
+          results.next()
+      }
+
+      val sut = new AdditionExpressionNodeParser {}
+
+      sut.parse(peekingIterator)(using context) shouldBe Left("+ requires 2 arguments")
+    }
+
+    it("should return an error when one of the expressions fails parsing") {
+      val expression1 = mock[ExpressionNode]
+
+      val results = Seq(Right(expression1), Left("Failed parsing")).iterator
+
+      val peekingIterator = PeekingIterator(Seq(
+        Token(LeftParenthesis, "("), Token(Plus, "+"),
+        Token(TokenType.Name, "eaten"), Token(TokenType.Name, "eaten"),
+        Token(RightParenthesis, ")")
+      ).iterator)
+      val context = new BasicLanguageFamilyParserContext {
+        override def parseExpression(tokens: PeekingIterator[Token]): Either[String, ExpressionNode] =
+          peekingIterator.consumeTokens(1)
+          results.next()
+      }
+
+      val sut = new AdditionExpressionNodeParser {}
+
+      sut.parse(peekingIterator)(using context) shouldBe Left("Failed parsing")
+   }
+  }
+
+  describe("Subtraction expression node parsers") {
+    it("should return a subtraction expression node when presented with valid list of expressions") {
+      val expression1 = mock[ExpressionNode]
+      val expression2 = mock[ExpressionNode]
+
+      val results = Seq(Right(expression1), Right(expression2)).iterator
+
+      val peekingIterator = PeekingIterator(Seq(
+        Token(LeftParenthesis, "("), Token(Minus, "-"),
+        Token(TokenType.Name, "eaten"), Token(TokenType.Name, "eaten"),
+        Token(RightParenthesis, ")")
+      ).iterator)
+      val context = new BasicLanguageFamilyParserContext {
+        override def parseExpression(tokens: PeekingIterator[Token]): Either[String, ExpressionNode] =
+          peekingIterator.consumeTokens(1)
+          results.next()
+      }
+
+      val sut = new SubtractionExpressionNodeParser {}
+
+      sut.parse(peekingIterator)(using context) shouldBe Right(SubtractionExpressionNode(expression1, expression2))
+    }
+
+    it("should return an error when presented with too many expressions") {
+      val expression1 = mock[ExpressionNode]
+      val expression2 = mock[ExpressionNode]
+      val expression3 = mock[ExpressionNode]
+
+      val results = Seq(Right(expression1), Right(expression2), Right(expression3)).iterator
+
+      val peekingIterator = PeekingIterator(Seq(
+        Token(LeftParenthesis, "("), Token(Minus, "-"),
+        Token(TokenType.Name, "eaten"), Token(TokenType.Name, "eaten"), Token(TokenType.Name, "eaten"),
+        Token(RightParenthesis, ")")
+      ).iterator)
+      val context = new BasicLanguageFamilyParserContext {
+        override def parseExpression(tokens: PeekingIterator[Token]): Either[String, ExpressionNode] =
+          peekingIterator.consumeTokens(1)
+          results.next()
+      }
+
+      val sut = new SubtractionExpressionNodeParser {}
+
+      sut.parse(peekingIterator)(using context) shouldBe Left("- requires 2 arguments")
+    }
+
+    it("should return an error when presented with too few expressions") {
+      val expression1 = mock[ExpressionNode]
+
+      val results = Seq(Right(expression1)).iterator
+
+      val peekingIterator = PeekingIterator(Seq(
+        Token(LeftParenthesis, "("), Token(Minus, "-"),
+        Token(TokenType.Name, "eaten"),
+        Token(RightParenthesis, ")")
+      ).iterator)
+      val context = new BasicLanguageFamilyParserContext {
+        override def parseExpression(tokens: PeekingIterator[Token]): Either[String, ExpressionNode] =
+          peekingIterator.consumeTokens(1)
+          results.next()
+      }
+
+      val sut = new SubtractionExpressionNodeParser {}
+
+      sut.parse(peekingIterator)(using context) shouldBe Left("- requires 2 arguments")
+    }
+
+    it("should return an error when one of the expressions fails parsing") {
+      val expression1 = mock[ExpressionNode]
+
+      val results = Seq(Right(expression1), Left("Failed parsing")).iterator
+
+      val peekingIterator = PeekingIterator(Seq(
+        Token(LeftParenthesis, "("), Token(Minus, "-"),
+        Token(TokenType.Name, "eaten"), Token(TokenType.Name, "eaten"),
+        Token(RightParenthesis, ")")
+      ).iterator)
+      val context = new BasicLanguageFamilyParserContext {
+        override def parseExpression(tokens: PeekingIterator[Token]): Either[String, ExpressionNode] =
+          peekingIterator.consumeTokens(1)
+          results.next()
+      }
+
+      val sut = new SubtractionExpressionNodeParser {}
+
+      sut.parse(peekingIterator)(using context) shouldBe Left("Failed parsing")
+    }
+  }
+
+  describe("Multiplication expression node parsers") {
+    it("should return a subtraction expression node when presented with valid list of expressions") {
+      val expression1 = mock[ExpressionNode]
+      val expression2 = mock[ExpressionNode]
+
+      val results = Seq(Right(expression1), Right(expression2)).iterator
+
+      val peekingIterator = PeekingIterator(Seq(
+        Token(LeftParenthesis, "("), Token(Asterisk, "*"),
+        Token(TokenType.Name, "eaten"), Token(TokenType.Name, "eaten"),
+        Token(RightParenthesis, ")")
+      ).iterator)
+      val context = new BasicLanguageFamilyParserContext {
+        override def parseExpression(tokens: PeekingIterator[Token]): Either[String, ExpressionNode] =
+          peekingIterator.consumeTokens(1)
+          results.next()
+      }
+
+      val sut = new MultiplicationExpressionNodeParser {}
+
+      sut.parse(peekingIterator)(using context) shouldBe Right(MultiplicationExpressionNode(expression1, expression2))
+    }
+
+    it("should return an error when presented with too many expressions") {
+      val expression1 = mock[ExpressionNode]
+      val expression2 = mock[ExpressionNode]
+      val expression3 = mock[ExpressionNode]
+
+      val results = Seq(Right(expression1), Right(expression2), Right(expression3)).iterator
+
+      val peekingIterator = PeekingIterator(Seq(
+        Token(LeftParenthesis, "("), Token(Asterisk, "*"),
+        Token(TokenType.Name, "eaten"), Token(TokenType.Name, "eaten"), Token(TokenType.Name, "eaten"),
+        Token(RightParenthesis, ")")
+      ).iterator)
+      val context = new BasicLanguageFamilyParserContext {
+        override def parseExpression(tokens: PeekingIterator[Token]): Either[String, ExpressionNode] =
+          peekingIterator.consumeTokens(1)
+          results.next()
+      }
+
+      val sut = new MultiplicationExpressionNodeParser {}
+
+      sut.parse(peekingIterator)(using context) shouldBe Left("* requires 2 arguments")
+    }
+
+    it("should return an error when presented with too few expressions") {
+      val expression1 = mock[ExpressionNode]
+
+      val results = Seq(Right(expression1)).iterator
+
+      val peekingIterator = PeekingIterator(Seq(
+        Token(LeftParenthesis, "("), Token(Asterisk, "*"),
+        Token(TokenType.Name, "eaten"),
+        Token(RightParenthesis, ")")
+      ).iterator)
+      val context = new BasicLanguageFamilyParserContext {
+        override def parseExpression(tokens: PeekingIterator[Token]): Either[String, ExpressionNode] =
+          peekingIterator.consumeTokens(1)
+          results.next()
+      }
+
+      val sut = new MultiplicationExpressionNodeParser {}
+
+      sut.parse(peekingIterator)(using context) shouldBe Left("* requires 2 arguments")
+    }
+
+    it("should return an error when one of the expressions fails parsing") {
+      val expression1 = mock[ExpressionNode]
+
+      val results = Seq(Right(expression1), Left("Failed parsing")).iterator
+
+      val peekingIterator = PeekingIterator(Seq(
+        Token(LeftParenthesis, "("), Token(Asterisk, "*"),
+        Token(TokenType.Name, "eaten"), Token(TokenType.Name, "eaten"),
+        Token(RightParenthesis, ")")
+      ).iterator)
+      val context = new BasicLanguageFamilyParserContext {
+        override def parseExpression(tokens: PeekingIterator[Token]): Either[String, ExpressionNode] =
+          peekingIterator.consumeTokens(1)
+          results.next()
+      }
+
+      val sut = new MultiplicationExpressionNodeParser {}
+
+      sut.parse(peekingIterator)(using context) shouldBe Left("Failed parsing")
+    }
+  }
+
+  describe("Division expression node parsers") {
+    it("should return a division expression node when presented with valid list of expressions") {
+      val expression1 = mock[ExpressionNode]
+      val expression2 = mock[ExpressionNode]
+
+      val results = Seq(Right(expression1), Right(expression2)).iterator
+
+      val peekingIterator = PeekingIterator(Seq(
+        Token(LeftParenthesis, "("), Token(Slash, "/"),
+        Token(TokenType.Name, "eaten"), Token(TokenType.Name, "eaten"),
+        Token(RightParenthesis, ")")
+      ).iterator)
+      val context = new BasicLanguageFamilyParserContext {
+        override def parseExpression(tokens: PeekingIterator[Token]): Either[String, ExpressionNode] =
+          peekingIterator.consumeTokens(1)
+          results.next()
+      }
+
+      val sut = new DivisionExpressionNodeParser {}
+
+      sut.parse(peekingIterator)(using context) shouldBe Right(DivisionExpressionNode(expression1, expression2))
+    }
+
+    it("should return an error when presented with too many expressions") {
+      val expression1 = mock[ExpressionNode]
+      val expression2 = mock[ExpressionNode]
+      val expression3 = mock[ExpressionNode]
+
+      val results = Seq(Right(expression1), Right(expression2), Right(expression3)).iterator
+
+      val peekingIterator = PeekingIterator(Seq(
+        Token(LeftParenthesis, "("), Token(Slash, "/"),
+        Token(TokenType.Name, "eaten"), Token(TokenType.Name, "eaten"), Token(TokenType.Name, "eaten"),
+        Token(RightParenthesis, ")")
+      ).iterator)
+      val context = new BasicLanguageFamilyParserContext {
+        override def parseExpression(tokens: PeekingIterator[Token]): Either[String, ExpressionNode] =
+          peekingIterator.consumeTokens(1)
+          results.next()
+      }
+
+      val sut = new DivisionExpressionNodeParser {}
+
+      sut.parse(peekingIterator)(using context) shouldBe Left("/ requires 2 arguments")
+    }
+
+    it("should return an error when presented with too few expressions") {
+      val expression1 = mock[ExpressionNode]
+
+      val results = Seq(Right(expression1)).iterator
+
+      val peekingIterator = PeekingIterator(Seq(
+        Token(LeftParenthesis, "("), Token(Slash, "/"),
+        Token(TokenType.Name, "eaten"),
+        Token(RightParenthesis, ")")
+      ).iterator)
+      val context = new BasicLanguageFamilyParserContext {
+        override def parseExpression(tokens: PeekingIterator[Token]): Either[String, ExpressionNode] =
+          peekingIterator.consumeTokens(1)
+          results.next()
+      }
+
+      val sut = new DivisionExpressionNodeParser {}
+
+      sut.parse(peekingIterator)(using context) shouldBe Left("/ requires 2 arguments")
+    }
+
+    it("should return an error when one of the expressions fails parsing") {
+      val expression1 = mock[ExpressionNode]
+
+      val results = Seq(Right(expression1), Left("Failed parsing")).iterator
+
+      val peekingIterator = PeekingIterator(Seq(
+        Token(LeftParenthesis, "("), Token(Slash, "/"),
+        Token(TokenType.Name, "eaten"), Token(TokenType.Name, "eaten"),
+        Token(RightParenthesis, ")")
+      ).iterator)
+      val context = new BasicLanguageFamilyParserContext {
+        override def parseExpression(tokens: PeekingIterator[Token]): Either[String, ExpressionNode] =
+          peekingIterator.consumeTokens(1)
+          results.next()
+      }
+
+      val sut = new DivisionExpressionNodeParser {}
+
+      sut.parse(peekingIterator)(using context) shouldBe Left("Failed parsing")
+    }
+  }
+
+  describe("Equal expression node parsers") {
+    it("should return a equal expression node when presented with valid list of expressions") {
+      val expression1 = mock[ExpressionNode]
+      val expression2 = mock[ExpressionNode]
+
+      val results = Seq(Right(expression1), Right(expression2)).iterator
+
+      val peekingIterator = PeekingIterator(Seq(
+        Token(LeftParenthesis, "("), Token(Equal, "="),
+        Token(TokenType.Name, "eaten"), Token(TokenType.Name, "eaten"),
+        Token(RightParenthesis, ")")
+      ).iterator)
+      val context = new BasicLanguageFamilyParserContext {
+        override def parseExpression(tokens: PeekingIterator[Token]): Either[String, ExpressionNode] =
+          peekingIterator.consumeTokens(1)
+          results.next()
+      }
+
+      val sut = new EqualityExpressionNodeParser {}
+
+      sut.parse(peekingIterator)(using context) shouldBe Right(EqualityExpressionNode(expression1, expression2))
+    }
+
+    it("should return an error when presented with too many expressions") {
+      val expression1 = mock[ExpressionNode]
+      val expression2 = mock[ExpressionNode]
+      val expression3 = mock[ExpressionNode]
+
+      val results = Seq(Right(expression1), Right(expression2), Right(expression3)).iterator
+
+      val peekingIterator = PeekingIterator(Seq(
+        Token(LeftParenthesis, "("), Token(Equal, "="),
+        Token(TokenType.Name, "eaten"), Token(TokenType.Name, "eaten"), Token(TokenType.Name, "eaten"),
+        Token(RightParenthesis, ")")
+      ).iterator)
+      val context = new BasicLanguageFamilyParserContext {
+        override def parseExpression(tokens: PeekingIterator[Token]): Either[String, ExpressionNode] =
+          peekingIterator.consumeTokens(1)
+          results.next()
+      }
+
+      val sut = new EqualityExpressionNodeParser {}
+
+      sut.parse(peekingIterator)(using context) shouldBe Left("= requires 2 arguments")
+    }
+
+    it("should return an error when presented with too few expressions") {
+      val expression1 = mock[ExpressionNode]
+
+      val results = Seq(Right(expression1)).iterator
+
+      val peekingIterator = PeekingIterator(Seq(
+        Token(LeftParenthesis, "("), Token(Equal, "="),
+        Token(TokenType.Name, "eaten"),
+        Token(RightParenthesis, ")")
+      ).iterator)
+      val context = new BasicLanguageFamilyParserContext {
+        override def parseExpression(tokens: PeekingIterator[Token]): Either[String, ExpressionNode] =
+          peekingIterator.consumeTokens(1)
+          results.next()
+      }
+
+      val sut = new EqualityExpressionNodeParser {}
+
+      sut.parse(peekingIterator)(using context) shouldBe Left("= requires 2 arguments")
+    }
+
+    it("should return an error when one of the expressions fails parsing") {
+      val expression1 = mock[ExpressionNode]
+
+      val results = Seq(Right(expression1), Left("Failed parsing")).iterator
+
+      val peekingIterator = PeekingIterator(Seq(
+        Token(LeftParenthesis, "("), Token(Equal, "="),
+        Token(TokenType.Name, "eaten"), Token(TokenType.Name, "eaten"),
+        Token(RightParenthesis, ")")
+      ).iterator)
+      val context = new BasicLanguageFamilyParserContext {
+        override def parseExpression(tokens: PeekingIterator[Token]): Either[String, ExpressionNode] =
+          peekingIterator.consumeTokens(1)
+          results.next()
+      }
+
+      val sut = new EqualityExpressionNodeParser {}
+
+      sut.parse(peekingIterator)(using context) shouldBe Left("Failed parsing")
+    }
+  }
+
+  describe("Less than expression node parsers") {
+    it("should return a equal expression node when presented with valid list of expressions") {
+      val expression1 = mock[ExpressionNode]
+      val expression2 = mock[ExpressionNode]
+
+      val results = Seq(Right(expression1), Right(expression2)).iterator
+
+      val peekingIterator = PeekingIterator(Seq(
+        Token(LeftParenthesis, "("), Token(LessThan, "<"),
+        Token(TokenType.Name, "eaten"), Token(TokenType.Name, "eaten"),
+        Token(RightParenthesis, ")")
+      ).iterator)
+      val context = new BasicLanguageFamilyParserContext {
+        override def parseExpression(tokens: PeekingIterator[Token]): Either[String, ExpressionNode] =
+          peekingIterator.consumeTokens(1)
+          results.next()
+      }
+
+      val sut = new LessThanExpressionNodeParser {}
+
+      sut.parse(peekingIterator)(using context) shouldBe Right(LessThanExpressionNode(expression1, expression2))
+    }
+
+    it("should return an error when presented with too many expressions") {
+      val expression1 = mock[ExpressionNode]
+      val expression2 = mock[ExpressionNode]
+      val expression3 = mock[ExpressionNode]
+
+      val results = Seq(Right(expression1), Right(expression2), Right(expression3)).iterator
+
+      val peekingIterator = PeekingIterator(Seq(
+        Token(LeftParenthesis, "("), Token(LessThan, "<"),
+        Token(TokenType.Name, "eaten"), Token(TokenType.Name, "eaten"), Token(TokenType.Name, "eaten"),
+        Token(RightParenthesis, ")")
+      ).iterator)
+      val context = new BasicLanguageFamilyParserContext {
+        override def parseExpression(tokens: PeekingIterator[Token]): Either[String, ExpressionNode] =
+          peekingIterator.consumeTokens(1)
+          results.next()
+      }
+
+      val sut = new LessThanExpressionNodeParser {}
+
+      sut.parse(peekingIterator)(using context) shouldBe Left("< requires 2 arguments")
+    }
+
+    it("should return an error when presented with too few expressions") {
+      val expression1 = mock[ExpressionNode]
+
+      val results = Seq(Right(expression1)).iterator
+
+      val peekingIterator = PeekingIterator(Seq(
+        Token(LeftParenthesis, "("), Token(LessThan, "<"),
+        Token(TokenType.Name, "eaten"),
+        Token(RightParenthesis, ")")
+      ).iterator)
+      val context = new BasicLanguageFamilyParserContext {
+        override def parseExpression(tokens: PeekingIterator[Token]): Either[String, ExpressionNode] =
+          peekingIterator.consumeTokens(1)
+          results.next()
+      }
+
+      val sut = new LessThanExpressionNodeParser {}
+
+      sut.parse(peekingIterator)(using context) shouldBe Left("< requires 2 arguments")
+    }
+
+    it("should return an error when one of the expressions fails parsing") {
+      val expression1 = mock[ExpressionNode]
+
+      val results = Seq(Right(expression1), Left("Failed parsing")).iterator
+
+      val peekingIterator = PeekingIterator(Seq(
+        Token(LeftParenthesis, "("), Token(LessThan, "<"),
+        Token(TokenType.Name, "eaten"), Token(TokenType.Name, "eaten"),
+        Token(RightParenthesis, ")")
+      ).iterator)
+      val context = new BasicLanguageFamilyParserContext {
+        override def parseExpression(tokens: PeekingIterator[Token]): Either[String, ExpressionNode] =
+          peekingIterator.consumeTokens(1)
+          results.next()
+      }
+
+      val sut = new LessThanExpressionNodeParser {}
+
+      sut.parse(peekingIterator)(using context) shouldBe Left("Failed parsing")
+    }
+  }
+
+  describe("Greather than expression node parsers") {
+    it("should return a greater than expression node when presented with valid list of expressions") {
+      val expression1 = mock[ExpressionNode]
+      val expression2 = mock[ExpressionNode]
+
+      val results = Seq(Right(expression1), Right(expression2)).iterator
+
+      val peekingIterator = PeekingIterator(Seq(
+        Token(LeftParenthesis, "("), Token(GreaterThan, ">"),
+        Token(TokenType.Name, "eaten"), Token(TokenType.Name, "eaten"),
+        Token(RightParenthesis, ")")
+      ).iterator)
+      val context = new BasicLanguageFamilyParserContext {
+        override def parseExpression(tokens: PeekingIterator[Token]): Either[String, ExpressionNode] =
+          peekingIterator.consumeTokens(1)
+          results.next()
+      }
+
+      val sut = new GreaterThanExpressionNodeParser {}
+
+      sut.parse(peekingIterator)(using context) shouldBe Right(GreaterThanExpressionNode(expression1, expression2))
+    }
+
+    it("should return an error when presented with too many expressions") {
+      val expression1 = mock[ExpressionNode]
+      val expression2 = mock[ExpressionNode]
+      val expression3 = mock[ExpressionNode]
+
+      val results = Seq(Right(expression1), Right(expression2), Right(expression3)).iterator
+
+      val peekingIterator = PeekingIterator(Seq(
+        Token(LeftParenthesis, "("), Token(GreaterThan, ">"),
+        Token(TokenType.Name, "eaten"), Token(TokenType.Name, "eaten"), Token(TokenType.Name, "eaten"),
+        Token(RightParenthesis, ")")
+      ).iterator)
+      val context = new BasicLanguageFamilyParserContext {
+        override def parseExpression(tokens: PeekingIterator[Token]): Either[String, ExpressionNode] =
+          peekingIterator.consumeTokens(1)
+          results.next()
+      }
+
+      val sut = new GreaterThanExpressionNodeParser {}
+
+      sut.parse(peekingIterator)(using context) shouldBe Left("> requires 2 arguments")
+    }
+
+    it("should return an error when presented with too few expressions") {
+      val expression1 = mock[ExpressionNode]
+
+      val results = Seq(Right(expression1)).iterator
+
+      val peekingIterator = PeekingIterator(Seq(
+        Token(LeftParenthesis, "("), Token(GreaterThan, ">"),
+        Token(TokenType.Name, "eaten"),
+        Token(RightParenthesis, ")")
+      ).iterator)
+      val context = new BasicLanguageFamilyParserContext {
+        override def parseExpression(tokens: PeekingIterator[Token]): Either[String, ExpressionNode] =
+          peekingIterator.consumeTokens(1)
+          results.next()
+      }
+
+      val sut = new GreaterThanExpressionNodeParser {}
+
+      sut.parse(peekingIterator)(using context) shouldBe Left("> requires 2 arguments")
+    }
+
+    it("should return an error when one of the expressions fails parsing") {
+      val expression1 = mock[ExpressionNode]
+
+      val results = Seq(Right(expression1), Left("Failed parsing")).iterator
+
+      val peekingIterator = PeekingIterator(Seq(
+        Token(LeftParenthesis, "("), Token(GreaterThan, ">"),
+        Token(TokenType.Name, "eaten"), Token(TokenType.Name, "eaten"),
+        Token(RightParenthesis, ")")
+      ).iterator)
+      val context = new BasicLanguageFamilyParserContext {
+        override def parseExpression(tokens: PeekingIterator[Token]): Either[String, ExpressionNode] =
+          peekingIterator.consumeTokens(1)
+          results.next()
+      }
+
+      val sut = new GreaterThanExpressionNodeParser {}
+
+      sut.parse(peekingIterator)(using context) shouldBe Left("Failed parsing")
+    }
+  }
+
+  describe("Print expression node parsers") {
+    it("should return a print expression node when presented with valid list of expressions") {
       val expression = mock[ExpressionNode]
 
-      forAll(optrTable) {
-        (parser, token, operator) =>
-          val results = Seq(Right(expression)).iterator
-          val peekingIterator = PeekingIterator(Seq(
-            Token(TokenType.LeftParenthesis, "("), token,
-            Token(TokenType.Name, "eaten"),
-            Token(TokenType.RightParenthesis, ")")
-          ).iterator)
-          val context = new BasicLanguageFamilyParserContext {
-            override def parseExpression(tokens: PeekingIterator[Token]): Either[String, ExpressionNode] =
-              peekingIterator.consumeTokens(1)
-              results.next()
-          }
+      val results = Seq(Right(expression)).iterator
 
-          val sut = parser
-
-          sut.parse(peekingIterator)(using context) shouldBe Right(FunctionCallExpressionNode(operator, Seq(expression)))
+      val peekingIterator = PeekingIterator(Seq(
+        Token(LeftParenthesis, "("), Token(Print, "print"),
+        Token(TokenType.Name, "eaten"),
+        Token(RightParenthesis, ")")
+      ).iterator)
+      val context = new BasicLanguageFamilyParserContext {
+        override def parseExpression(tokens: PeekingIterator[Token]): Either[String, ExpressionNode] =
+          peekingIterator.consumeTokens(1)
+          results.next()
       }
+
+      val sut = new PrintExpressionNodeParser {}
+
+      sut.parse(peekingIterator)(using context) shouldBe Right(PrintExpressionNode(expression))
     }
 
-    it("should return a optr expression node expression when presented with a valid optr construction and no expressions") {
-      forAll(optrTable) {
-        (parser, token, operator) =>
-          val results = Seq.empty.iterator
-          val context = new BasicLanguageFamilyParserContext {
-            override def parseExpression(tokens: PeekingIterator[Token]): Either[String, ExpressionNode] =
-              results.next()
-          }
+    it("should return an error when presented with too many expressions") {
+      val expression1 = mock[ExpressionNode]
+      val expression2 = mock[ExpressionNode]
 
-          val peekingIterator = PeekingIterator(Seq(
-            Token(TokenType.LeftParenthesis, "("), token,
-            Token(TokenType.RightParenthesis, ")")
-          ).iterator)
+      val results = Seq(Right(expression1), Right(expression2)).iterator
 
-          val sut = parser
-
-          sut.parse(peekingIterator)(using context) shouldBe Right(FunctionCallExpressionNode(operator, Seq.empty))
+      val peekingIterator = PeekingIterator(Seq(
+        Token(LeftParenthesis, "("), Token(Print, "print"),
+        Token(TokenType.Name, "eaten"), Token(TokenType.Name, "eaten"),
+        Token(RightParenthesis, ")")
+      ).iterator)
+      val context = new BasicLanguageFamilyParserContext {
+        override def parseExpression(tokens: PeekingIterator[Token]): Either[String, ExpressionNode] =
+          peekingIterator.consumeTokens(1)
+          results.next()
       }
+
+      val sut = new PrintExpressionNodeParser {}
+
+      sut.parse(peekingIterator)(using context) shouldBe Left("print requires 1 arguments")
     }
 
-    it("should return the error when an expression parsing fails") {
-      forAll(optrTable) {
-        (parser, token, optrValueNode) =>
-          val results = Seq(Right(mock[ExpressionNode]), Left("Something went wrong in parsing"), Right(mock[ExpressionNode])).iterator
-          val peekingIterator = PeekingIterator(Seq(
-            Token(TokenType.LeftParenthesis, "("), token,
-            Token(TokenType.Name, "eaten"), Token(TokenType.Name, "eaten"),
-            Token(TokenType.RightParenthesis, ")")
-          ).iterator)
-          val context = new BasicLanguageFamilyParserContext {
-            override def parseExpression(tokens: PeekingIterator[Token]): Either[String, ExpressionNode] =
-              peekingIterator.consumeTokens(1)
-              results.next()
-          }
+    it("should return an error when presented with too few expressions") {
+      val results = Seq.empty.iterator
 
-          val sut = parser
-
-          sut.parse(peekingIterator)(using context) shouldBe Left("Something went wrong in parsing")
+      val peekingIterator = PeekingIterator(Seq(
+        Token(LeftParenthesis, "("), Token(Print, "print"), Token(RightParenthesis, ")")).iterator)
+      val context = new BasicLanguageFamilyParserContext {
+        override def parseExpression(tokens: PeekingIterator[Token]): Either[String, ExpressionNode] =
+          peekingIterator.consumeTokens(1)
+          results.next()
       }
+
+      val sut = new PrintExpressionNodeParser {}
+
+      sut.parse(peekingIterator)(using context) shouldBe Left("print requires 1 arguments")
+    }
+
+    it("should return an error when one of the expressions fails parsing") {
+      val results = Seq(Left("Failed parsing")).iterator
+
+      val peekingIterator = PeekingIterator(Seq(
+        Token(LeftParenthesis, "("), Token(Print, "print"),
+        Token(TokenType.Name, "eaten"),
+        Token(RightParenthesis, ")")
+      ).iterator)
+      val context = new BasicLanguageFamilyParserContext {
+        override def parseExpression(tokens: PeekingIterator[Token]): Either[String, ExpressionNode] =
+          peekingIterator.consumeTokens(1)
+          results.next()
+      }
+
+      val sut = new PrintExpressionNodeParser {}
+
+      sut.parse(peekingIterator)(using context) shouldBe Left("Failed parsing")
+    }
+  }
+
+  describe("Function call expression node parsers") {
+    it("should return a function call expression node when presented with valid list of expressions") {
+      val expression = mock[ExpressionNode]
+
+      val results = Seq(Right(expression)).iterator
+
+      val peekingIterator = PeekingIterator(Seq(
+        Token(LeftParenthesis, "("), Token(Name, "foo"),
+        Token(TokenType.Name, "eaten"),
+        Token(RightParenthesis, ")")
+      ).iterator)
+      val context = new BasicLanguageFamilyParserContext {
+        override def parseExpression(tokens: PeekingIterator[Token]): Either[String, ExpressionNode] =
+          peekingIterator.consumeTokens(1)
+          results.next()
+      }
+
+      val sut = new FunctionCallExpressionNodeParser {}
+
+      sut.parse(peekingIterator)(using context) shouldBe Right(FunctionCallExpressionNode("foo", Seq(expression)))
+    }
+
+
+    it("should return an error when one of the expressions fails parsing") {
+      val results = Seq(Left("Failed parsing")).iterator
+
+      val peekingIterator = PeekingIterator(Seq(
+        Token(LeftParenthesis, "("), Token(Name, "foo"),
+        Token(TokenType.Name, "eaten"),
+        Token(RightParenthesis, ")")
+      ).iterator)
+      val context = new BasicLanguageFamilyParserContext {
+        override def parseExpression(tokens: PeekingIterator[Token]): Either[String, ExpressionNode] =
+          peekingIterator.consumeTokens(1)
+          results.next()
+      }
+
+      val sut = new FunctionCallExpressionNodeParser {}
+
+      sut.parse(peekingIterator)(using context) shouldBe Left("Failed parsing")
     }
   }
 }

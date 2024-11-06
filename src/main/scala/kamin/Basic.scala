@@ -11,7 +11,7 @@ object BasicLexer extends Lexer(
     DefineToken, IfToken, WhileToken, SetToken, BeginToken)
 )
 
-object BasicFunDefNodeParser extends FunDefNodeParser
+object BasicFunDefNodeParser extends FunctionDefinitionNodeParser
 
 object BasicExpressionNodeParser extends IntegerValueExpressionNodeParser
   with VariableExpressionNodeParser
@@ -19,11 +19,11 @@ object BasicExpressionNodeParser extends IntegerValueExpressionNodeParser
   with WhileExpressionNodeParser
   with SetExpressionNodeParser
   with BeginExpressionNodeParser
-  with PlusExpressionNodeParser
-  with MinusExpressionNodeParser
+  with AdditionExpressionNodeParser
+  with SubtractionExpressionNodeParser
   with MultiplicationExpressionNodeParser
   with DivisionExpressionNodeParser
-  with EqualExpressionNodeParser
+  with EqualityExpressionNodeParser
   with LessThanExpressionNodeParser
   with GreaterThanExpressionNodeParser
   with PrintExpressionNodeParser
