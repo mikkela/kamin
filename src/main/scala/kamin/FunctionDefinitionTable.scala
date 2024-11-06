@@ -3,9 +3,9 @@ package kamin
 import scala.collection.mutable
 
 class FunctionDefinitionTable:
-  protected val table = mutable.HashMap[String, FunctionDefinitionNode]()
+  private val table = mutable.HashMap[String, FunctionDefinitionNode]()
 
-  def register(functionDefinition: FunctionDefinitionNode) =
+  def register(functionDefinition: FunctionDefinitionNode): Unit =
     table.put(functionDefinition.function, functionDefinition)
 
   def lookupFunctionDefinition(name: String): Option[FunctionDefinitionNode] =
