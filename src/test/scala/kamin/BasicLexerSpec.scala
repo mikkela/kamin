@@ -1,11 +1,11 @@
 package kamin
 
-import kamin.{TokenType, BasicTokenizer, Token}
+import kamin.{TokenType, Token}
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.prop.TableDrivenPropertyChecks
 
-class BasicTokenTypeSpec extends AnyFunSpec
+class BasicLexerSpec extends AnyFunSpec
   with Matchers
   with TableDrivenPropertyChecks {
 
@@ -20,12 +20,12 @@ class BasicTokenTypeSpec extends AnyFunSpec
     ("/", Token(TokenType.Slash, "/")),
     ("<", Token(TokenType.LessThan, "<")),
     (">", Token(TokenType.GreaterThan, ">")),
-    ("define", Token(TokenType.Define, "DEFINE")),
-    ("print", Token(TokenType.Print, "PRINT")),
-    ("if", Token(TokenType.If, "IF")),
-    ("while", Token(TokenType.While, "WHILE")),
-    ("set", Token(TokenType.Set, "SET")),
-    ("begin", Token(TokenType.Begin, "BEGIN")),
+    ("define", Token(TokenType.Define, "define")),
+    ("print", Token(TokenType.Print, "print")),
+    ("if", Token(TokenType.If, "if")),
+    ("while", Token(TokenType.While, "while")),
+    ("set", Token(TokenType.Set, "set")),
+    ("begin", Token(TokenType.Begin, "begin")),
     ("abe", Token(TokenType.Name, "abe")),
     ("-345", Token(TokenType.Integer, "-345")),
     ("56", Token(TokenType.Integer, "56"))
@@ -35,7 +35,7 @@ class BasicTokenTypeSpec extends AnyFunSpec
       it("should convert the provided text correctly") {
         forAll(singleTokenTable) {
           (str, expectedToken) =>
-            BasicTokenizer.toToken(str) shouldBe expectedToken
+            BasicLexer.tokens(str).next() shouldBe expectedToken
         }
       }
   }

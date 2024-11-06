@@ -4,12 +4,11 @@ import org.jline.reader.{LineReaderBuilder, LineReader}
 import org.jline.terminal.TerminalBuilder
 
 object KaminMain extends App:
-  given tokenizer: Tokenizer = BasicTokenizer
   given parserContext: BasicLanguageFamilyParserContext = BasicParserContext
 
   val terminal = TerminalBuilder.terminal()
   val reader: LineReader = LineReaderBuilder.builder().terminal(terminal).build()
-  val lexer = Lexer()
+  val lexer = Lexer(Seq.empty, Seq.empty)
 
   var continue = true
   while (continue) do

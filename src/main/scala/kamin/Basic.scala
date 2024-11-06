@@ -1,32 +1,15 @@
 package kamin
 
+import kamin.BasicLexer.{LeftParenthesisToken, RightParenthesisToken, EqualToken, LessThanToken, GreaterThanToken, 
+  PlusToken, MinusToken, AsteriksToken, SlashToken, PrintToken, DefineToken, IfToken, WhileToken, SetToken, BeginToken}
+
 import kamin.TokenType.{Define, If, LeftParenthesis, Name, RightParenthesis, While}
 
-object BasicTokenizer extends Tokenizer
-  with IntegerTokenizer with NameTokenizer:
-  override inline def isSeparator(c: Char): Boolean =
-    c == '(' || c == ')'
-
-  def toToken(s: String): Token =
-    s match
-      case "(" => Token(TokenType.LeftParenthesis, s)
-      case ")" => Token(TokenType.RightParenthesis, s)
-      case "=" => Token(TokenType.Equal, s)
-      case "<" => Token(TokenType.LessThan, s)
-      case ">" => Token(TokenType.GreaterThan, s)
-      case "+" => Token(TokenType.Plus, s)
-      case "-" => Token(TokenType.Minus, s)
-      case "*" => Token(TokenType.Asteriks, s)
-      case "/" => Token(TokenType.Slash, s)
-      case "define" => Token(TokenType.Define, s.toUpperCase)
-      case "print" => Token(TokenType.Print, s.toUpperCase)
-      case "if" => Token(TokenType.If, s.toUpperCase)
-      case "while" => Token(TokenType.While, s.toUpperCase)
-      case "set" => Token(TokenType.Set, s.toUpperCase)
-      case "begin" => Token(TokenType.Begin, s.toUpperCase)
-      case _ if isInteger(s) => Token(TokenType.Integer, s) // If all characters are digits, it's a number
-      case _ if isName(s) => Token(TokenType.Name, s) // If all characters are letters, it's an identifier
-      case _ => Token(TokenType.Illegal, s) // Anything else is considered illegal
+object BasicLexer extends Lexer(
+  Seq(LeftParenthesisToken, RightParenthesisToken),
+  Seq(EqualToken, LessThanToken, GreaterThanToken, PlusToken, MinusToken, AsteriksToken, SlashToken, PrintToken,
+    DefineToken, IfToken, WhileToken, SetToken, BeginToken)
+)
 
 object BasicFunDefNodeParser extends FunDefNodeParser
 
