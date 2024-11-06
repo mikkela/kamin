@@ -60,8 +60,8 @@ trait Parser[ResultType <: Node, ParserContextType <: ParserContext]:
 
 
 
-trait FunDefNodeParser extends Parser[FunDefNode, BasicLanguageFamilyParserContext]:
-  override def parse(tokens: PeekingIterator[Token])(using context: BasicLanguageFamilyParserContext): Either[String, FunDefNode] =
+trait FunDefNodeParser extends Parser[FunctionDefinitionNode, BasicLanguageFamilyParserContext]:
+  override def parse(tokens: PeekingIterator[Token])(using context: BasicLanguageFamilyParserContext): Either[String, FunctionDefinitionNode] =
     checkTokensForPresence(tokens, LeftParenthesis, TokenType.Define) match
       case Left(_) => super.parse(tokens) // Handle fallback case directly
       case Right(_) =>
@@ -89,7 +89,7 @@ trait FunDefNodeParser extends Parser[FunDefNode, BasicLanguageFamilyParserConte
                             checkTokensForPresence(tokens, TokenType.RightParenthesis) match
                             case Right(_) =>
                               tokens.consumeTokens(1)
-                              Right(FunDefNode(name, args, expression))
+                              Right(FunctionDefinitionNode(name, args, expression))
                             case Left(value) => Left(value)
                           case Right(_) => unexpectedError
                           case Left(value) => Left(value)
@@ -104,7 +104,7 @@ trait IntegerValueExpressionNodeParser extends Parser[ExpressionNode, BasicLangu
     checkTokensForPresence(tokens, TokenType.Integer) match
       case Right(Seq(value)) =>
         tokens.consumeTokens(1)
-        Right(ValueExpressionNode(IntegerValueNode(value.literal.toInt)))
+        Right(IntegerExpressionNode(value.literal.toInt))
       case _ => super.parse(tokens)
 
 

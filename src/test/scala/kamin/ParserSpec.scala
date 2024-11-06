@@ -38,7 +38,7 @@ class ParserSpec extends AnyFunSpec
       ).iterator)
       val sut = new FunDefNodeParser {}
 
-      sut.parse(peekingIterator)(using context) shouldBe Right(FunDefNode(
+      sut.parse(peekingIterator)(using context) shouldBe Right(FunctionDefinitionNode(
         "plus", Seq("x", "y"), expression))
     }
 
@@ -56,7 +56,7 @@ class ParserSpec extends AnyFunSpec
       ).iterator)
       val sut = new FunDefNodeParser {}
 
-      sut.parse(peekingIterator)(using context) shouldBe Right(FunDefNode(
+      sut.parse(peekingIterator)(using context) shouldBe Right(FunctionDefinitionNode(
         "not", Seq("x"), expression))
     }
 
@@ -74,7 +74,7 @@ class ParserSpec extends AnyFunSpec
       ).iterator)
       val sut = new FunDefNodeParser {}
 
-      sut.parse(peekingIterator)(using context) shouldBe Right(FunDefNode(
+      sut.parse(peekingIterator)(using context) shouldBe Right(FunctionDefinitionNode(
         "random", Seq.empty, expression))
     }
 
@@ -135,7 +135,7 @@ class ParserSpec extends AnyFunSpec
       val peekingIterator = PeekingIterator(Seq(Token(TokenType.Integer, "96575")).iterator)
       val sut = new IntegerValueExpressionNodeParser {}
 
-      sut.parse(peekingIterator)(using context = null) shouldBe Right(ValueExpressionNode(IntegerValueNode(96575)))
+      sut.parse(peekingIterator)(using context = null) shouldBe Right(IntegerExpressionNode(96575))
     }
 
     it("should return an error when presented with a non-integer") {

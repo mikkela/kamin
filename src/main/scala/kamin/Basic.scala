@@ -29,8 +29,8 @@ object BasicExpressionNodeParser extends IntegerValueExpressionNodeParser
   with PrintExpressionNodeParser
   with FunctionCallExpressionNodeParser
 
-object BasicParser extends Parser[FunDefNode | ExpressionNode, BasicLanguageFamilyParserContext]:
-  override def parse(tokens: PeekingIterator[Token])(using context: BasicLanguageFamilyParserContext): Either[String, FunDefNode | ExpressionNode] =
+object BasicParser extends Parser[FunctionDefinitionNode | ExpressionNode, BasicLanguageFamilyParserContext]:
+  override def parse(tokens: PeekingIterator[Token])(using context: BasicLanguageFamilyParserContext): Either[String, FunctionDefinitionNode | ExpressionNode] =
     BasicFunDefNodeParser.parse(tokens) match
       case Right(value) => Right(value)
       case Left(_) => BasicExpressionNodeParser.parse(tokens)
