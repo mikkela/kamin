@@ -207,7 +207,9 @@ def parseOperator(tokens: PeekingIterator[Token],
         case Right(expressions) if expressions.length == expectedArity.getOrElse(expressions.length) =>
           checkTokensForPresence(tokens, TokenType.RightParenthesis) match
             case Left(value) => Left(value)
-            case Right(_) => Right(producer(literal, expressions))
+            case Right(_) =>
+              tokens.consumeTokens(1)
+              Right(producer(literal, expressions))
         case Right(expressions) => invalidArity(expectedOperator, expectedArity.get)
     case Right(_) => unexpectedError
 
