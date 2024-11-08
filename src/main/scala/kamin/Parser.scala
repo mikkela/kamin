@@ -185,7 +185,9 @@ trait BeginExpressionNodeParser extends Parser[ExpressionNode, BasicLanguageFami
           case Right(expressions) if expressions.nonEmpty =>
             checkTokensForPresence(tokens, TokenType.RightParenthesis) match
               case Left(value) => Left(value)
-              case Right(_) => Right(BeginExpressionNode(expressions))
+              case Right(_) =>
+                tokens.consumeTokens(1)
+                Right(BeginExpressionNode(expressions))
           case Right(_) =>
             tokens.peek(1) match
               case List(token) => invalidToken(token)
