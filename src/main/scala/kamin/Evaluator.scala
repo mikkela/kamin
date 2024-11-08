@@ -42,7 +42,7 @@ given Evaluator[ExpressionNode] with
         summon[Evaluator[GreaterThanExpressionNode]].evaluate(n)(using environment)(using functionDefinitionTable)
       case n: PrintExpressionNode =>
         summon[Evaluator[PrintExpressionNode]].evaluate(n)(using environment)(using functionDefinitionTable)
-      case _ =>
+      case null =>
         Left("Not implemented")
 
 given Evaluator[IntegerExpressionNode] with

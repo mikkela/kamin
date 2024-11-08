@@ -11,13 +11,13 @@ class ParserSpec extends AnyFunSpec
   with MockitoSugar {
   describe("A Parser") {
     it("should return an error when presented with an empty token stream") {
-      val sut = new Parser[Node, ParserContext] {}
+      val sut = new Parser[InputNode, ParserContext] {}
 
       sut.parse(PeekingIterator[Token](Seq.empty.iterator))(using context = null) shouldBe Left("Invalid end of program")
     }
 
     it("should return an error when presented with an invalid token as the first part") {
-      val sut = new Parser[Node, ParserContext] {}
+      val sut = new Parser[InputNode, ParserContext] {}
 
       sut.parse(PeekingIterator[Token](Seq(Token(TokenType.RightParenthesis, ")")).iterator))(using context = null) shouldBe Left(") is an unexpected token")
     }

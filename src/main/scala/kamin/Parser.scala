@@ -56,7 +56,7 @@ private def parseFixedNumberOfElements[ElementType <: Node](tokens: PeekingItera
       }
     }
 
-trait Parser[ResultType <: Node, ParserContextType <: ParserContext]:
+trait Parser[ResultType <: InputNode, ParserContextType <: ParserContext]:
   def parse(tokens: PeekingIterator[Token])(using context: ParserContextType): Either[String, ResultType] =
     val peeking = tokens.peek(1)
     if peeking.isEmpty then
