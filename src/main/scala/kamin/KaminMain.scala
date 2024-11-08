@@ -26,7 +26,7 @@ object KaminMain extends App:
   val parser = BasicParser
 
   var continue = true
-  while (continue) do
+  while continue do
     val input = reader.readLine("> ")
 
     if (input == "exit") continue = false
