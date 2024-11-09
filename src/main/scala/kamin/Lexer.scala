@@ -33,11 +33,6 @@ class Lexer(separators: => Seq[Token], keywords: => Seq[Token]):
     def isEndOfLine: Boolean =
       position >= input.length
 
-    def skipComments(): Unit =
-      if currentChar == ';' then
-        while !isEndOfLine && currentChar != '\n' && currentChar != '\r' do advance()
-        skipWhitespaces()
-
     def skipWhitespaces(): Unit =
       while currentChar.isWhitespace do advance()
 
@@ -58,13 +53,11 @@ class Lexer(separators: => Seq[Token], keywords: => Seq[Token]):
     new Iterator[Token]:
       override def hasNext: Boolean =
         skipWhitespaces()
-        skipComments()
         !isEndOfLine
 
       override def next(): Token =
         skipWhitespaces()
-        skipComments()
-
+        
         currentChar match
           case c if separators.exists(_.literal == c.toString) =>
             advance()

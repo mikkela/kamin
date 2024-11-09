@@ -16,6 +16,22 @@ object KaminMain extends App:
     functionDefinitionTable.register(f)
     println(f.function)
 
+  private def readline(firslLine: Boolean): String =
+    reader.readLine(if firslLine then "-> " else " > ").replaceAll(";.*", "") // removes the comments
+
+  def isBalanced(input: String): Boolean =
+    var stack = List[Char]()
+
+    for (char <- input)
+      char match
+        case '(' => stack = char :: stack // Push opening parenthesis to stack
+        case ')' =>
+          if (stack.isEmpty || stack.head != '(') return false // Unmatched closing parenthesis
+          stack = stack.tail // Pop the matching opening parenthesis
+        case _ => // Ignore other characters
+
+    stack.isEmpty // If stack is empty, all parentheses were balanced
+
   given parserContext: BasicLanguageFamilyParserContext = BasicParserContext
   given environment: Environment = GlobalAndLocalScopeEnvironment()
   given functionDefinitionTable: FunctionDefinitionTable = FunctionDefinitionTable()
@@ -27,14 +43,17 @@ object KaminMain extends App:
 
   var continue = true
   while continue do
-    val input = reader.readLine("> ")
+    var input = readline(true)
 
     if (input == "exit") continue = false
     else
+      while !isBalanced(input) do
+        input = input + " " + readline(false)
       parser.parse(PeekingIterator(lexer.tokens(input))) match
         case Left(e) => error(e)
         case Right(e:ExpressionNode) =>
           evaluateExpression(e)
         case Right(f: FunctionDefinitionNode) =>
           registerFunction(f)
+
 
