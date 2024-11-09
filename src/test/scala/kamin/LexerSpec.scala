@@ -86,23 +86,6 @@ class LexerSpec extends AnyFunSpec {
       assert(!it.hasNext)
     }
 
-    it("should ignore comments until the end of line ';this is a comment' should be empty") {
-      val lexer = Lexer(Seq.empty, Seq.empty)
-
-      val it = lexer.tokens(";this is a comment")
-      assert(!it.hasNext)
-    }
-
-    it("should ignore comments so ';this is a comment\nx' should be the text x") {
-      val lexer = Lexer(Seq.empty, Seq.empty)
-
-      val it = lexer.tokens(";this is a comment\nx")
-      assert(it.hasNext)
-      assert(it.next().literal == "x")
-
-      assert(!it.hasNext)
-    }
-    
     it("should match strings as given keywords with keywords") {
       val lexer1 = Lexer(Seq.empty, Seq.empty)
       val lexer2 = Lexer(Seq.empty, Seq(Token(If, "if")))

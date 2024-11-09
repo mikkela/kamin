@@ -127,24 +127,20 @@ class EvaluatorSpec extends AnyFunSpec
   describe("evaluate for FunctionCallExpressionNode") {
     it("should return the result of the function body when called") {
       val env = GlobalAndLocalScopeEnvironment()
-      env.set("a", 2)
-      env.set("b", 3)
       val table = new FunctionDefinitionTable {}
       table.register(
         FunctionDefinitionNode(
           "foo",
           Seq("x", "y"),
           BeginExpressionNode(Seq(
-            SetExpressionNode("a", VariableExpressionNode("x")),
-            SetExpressionNode("b", VariableExpressionNode("y")),
+            IntegerExpressionNode(300),
+            IntegerExpressionNode(400),
             IntegerExpressionNode(500)))))
 
       val sut = FunctionCallExpressionNode("foo", Seq(
         IntegerExpressionNode(10),
         IntegerExpressionNode(20)))
       sut.evaluate(using env)(using table) shouldBe Right(500)
-      env.get("a") shouldBe Some(10)
-      env.get("b") shouldBe Some(20)
     }
 
     it("should remove the local scope environment afterwards") {
@@ -169,6 +165,28 @@ class EvaluatorSpec extends AnyFunSpec
       env.get("y") shouldBe None
     }
 
+    it("should change the local scope first and then the global next") {
+      val env = GlobalAndLocalScopeEnvironment()
+      env.set("a", 2)
+      env.set("b", 3)
+      val table = new FunctionDefinitionTable {}
+      table.register(
+        FunctionDefinitionNode(
+          "foo",
+          Seq("x", "y"),
+          BeginExpressionNode(Seq(
+            SetExpressionNode("a", VariableExpressionNode("x")),
+            SetExpressionNode("b", VariableExpressionNode("y")),
+            AdditionExpressionNode(VariableExpressionNode("a"), VariableExpressionNode("b"))))))
+
+      val sut = FunctionCallExpressionNode("foo", Seq(
+        IntegerExpressionNode(10),
+        IntegerExpressionNode(20)))
+      sut.evaluate(using env)(using table) shouldBe Right(30)
+      env.get("a") shouldBe Some(2)
+      env.get("b") shouldBe Some(3)
+    }
+    
     it("should return the the error if one of the parameter evaluations returns an error") {
       val env = GlobalAndLocalScopeEnvironment()
       val sut = FunctionCallExpressionNode("foo", Seq(
